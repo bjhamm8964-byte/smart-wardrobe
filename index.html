@@ -3,12 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>我的藏宝箱 V9.16</title>
+    <title>我的藏宝箱 V9.17</title>
 	<link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="./icon.png">
     <style>
+/* =========================================
+           优化版：锁定屏幕样式 (更工整、高级)
+        ========================================= */
         #lockScreen {
             position: fixed;
             top: 0;
@@ -20,7 +23,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1); 
+            transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1); /* 更平滑的开锁动画 */
+            /* 稍微加深一点背景纹理 */
             background-image: radial-gradient(circle at center, #1a1a1a 0%, #000 100%); 
         }
         
@@ -113,6 +117,7 @@
             transform: scale(0.98); 
         }
 
+        /* 错误提示文字 */
         #passMsg {
             color: #ff4d4d;
             font-size: 13px;
@@ -120,7 +125,10 @@
             font-weight: bold;
             text-shadow: 0 1px 2px rgba(0,0,0,0.8);
         }
-
+	
+        /* =========================================
+           1. 核心变量系统
+        ========================================= */
         :root {
             --bg-body: #121212; --bg-panel: #1e1e1e; --text-main: #fffff0; --text-sub: #aaa;
             --border: #800020; --accent: #c5a059; --btn-bg: #800020; --btn-text: #fff;
@@ -130,6 +138,7 @@
             --select-overlay: rgba(197, 160, 89, 0.2); --select-border: #c5a059;
         }
         
+        /* 主题定义 */
         [data-theme="passion"] { --bg-body: #121212; --bg-panel: #1e1e1e; --text-main: #fffff0; --text-sub: #aaa; --border: #800020; --accent: #c5a059; --btn-bg: #800020; --btn-text: #fff; --highlight-bg: #2a1a1a; --shadow: rgba(0, 0, 0, 0.5); --scroll-btn-bg: rgba(30, 30, 30, 0.9); --progress-bg: #333; --progress-fill: #c5a059; --select-overlay: rgba(197, 160, 89, 0.2); --select-border: #c5a059; }
         [data-theme="ladies"] { --bg-body: #f9f7f2; --bg-panel: #ffffff; --text-main: #4a4a4a; --text-sub: #999; --border: #dba4a4; --accent: #d4af37; --btn-bg: #dba4a4; --btn-text: #fff; --highlight-bg: #fff0f5; --shadow: rgba(219, 164, 164, 0.15); --scroll-btn-bg: rgba(255, 255, 255, 0.9); --progress-bg: #eee; --progress-fill: #dba4a4; --badge-text: #fff; --badge-bg: rgba(0, 0, 0, 0.25); --select-overlay: rgba(212, 175, 55, 0.1); --select-border: #d4af37; }
         [data-theme="men"] { --bg-body: #0b1a2f; --bg-panel: #172a45; --text-main: #e6f1ff; --text-sub: #8892b0; --border: #4b5563; --accent: #a8b2d1; --btn-bg: #334155; --btn-text: #fff; --highlight-bg: #1c3557; --shadow: rgba(0, 0, 0, 0.3); --scroll-btn-bg: rgba(23, 42, 69, 0.9); --progress-bg: #0f1f3a; --progress-fill: #4a90e2; --select-overlay: rgba(74, 144, 226, 0.2); --select-border: #4a90e2; }
@@ -146,6 +155,7 @@
             --select-overlay: rgba(255, 0, 127, 0.1); --select-border: #ff007f;
         }
 
+        /* 基础布局 */
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 10px; background-color: var(--bg-body); color: var(--text-main); background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 20px 20px; transition: background 0.3s ease, color 0.3s ease; -webkit-text-size-adjust: 100%; }
         .main-wrapper { display: block; padding-bottom: 50px;}
         @media (min-width: 768px) {
@@ -157,6 +167,7 @@
         }
         .wood-panel { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px var(--shadow); transition: all 0.3s ease; }
         
+        /* 统计栏样式 */
         .storage-bar-area { margin-bottom: 10px; padding: 0 5px; }
         .storage-text { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-sub); margin-bottom: 4px; }
         .storage-track { width: 100%; height: 6px; background: var(--progress-bg); border-radius: 3px; overflow: hidden; }
@@ -166,6 +177,7 @@
         .time-label { font-size: 12px; color: var(--text-sub); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px;}
         .time-value { font-size: 20px; font-weight: bold; color: var(--accent); font-family: monospace; letter-spacing: 0.5px; }
         
+        /* 文件名标签 (新增) */
         .file-tag {
             font-size: 12px;
             background: var(--accent);
@@ -198,6 +210,7 @@
         .stat-title { font-size: 12px; opacity: 0.8; margin-bottom: 5px; font-weight: bold;}
         .stat-val { font-size: 18px; font-weight: bold; }
 
+        /* 输入控件 */
         .input-group { margin-bottom: 15px; }
         input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-panel); outline: none; box-sizing: border-box; color: var(--text-main); font-size: 14px; }
         input:focus, textarea:focus { border-color: var(--accent); }
@@ -221,6 +234,7 @@
         .btn-waifu-toggle { margin-top: 10px; width: 100%; padding: 10px; background: var(--bg-panel); border: 1px solid var(--border); color: var(--text-sub); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all 0.2s; }
         .btn-waifu-toggle:hover { color: var(--accent); border-color: var(--accent); }
 
+        /* 顶部筛选区 */
         .filter-sticky { position: sticky; top: 0; z-index: 10; background: var(--bg-body); padding-top: 5px; margin-bottom: 20px; transition: background 0.3s;}
         .search-input { width: 100%; padding: 12px 15px; border: 1px solid var(--border); border-radius: 25px; font-size: 15px; box-shadow: 0 2px 5px var(--shadow); background: var(--bg-panel); color: var(--text-main);}
         .filter-controls { display: flex; gap: 10px; margin-top: 10px; align-items: center; }
@@ -231,23 +245,28 @@
         .filter-dot.active { border-color: var(--text-main); transform: scale(1.1); }
         .filter-dot.active::after { content: '✓'; position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); color: #fff; text-shadow: 0 0 3px #000; font-weight: bold;}
 
+        /* --- 视图模式 (Grid vs List) --- */
         .masonry-grid { column-count: 2; column-gap: 20px; transition: opacity 0.3s; }
         @media (min-width: 900px) { .masonry-grid { column-count: 3; } }
         @media (min-width: 1400px) { .masonry-grid { column-count: 4; } }
         @media (min-width: 1800px) { .masonry-grid { column-count: 5; } }
 
+        /* 列表模式 */
         .masonry-grid.view-list { column-count: 1 !important; display: flex; flex-direction: column; gap: 10px; }
 
+/* 卡片 - 已修复iOS横屏图片消失bug (去除了transform) */
         .polaroid-card { background: var(--bg-panel); border-radius: 8px; margin-bottom: 20px; break-inside: avoid; box-shadow: 0 4px 8px var(--shadow); overflow: hidden; border: 1px solid var(--border); transition: transform 0.2s; color: var(--text-main); position: relative;}
         .polaroid-card:hover { transform: translateY(-3px); box-shadow: 0 8px 16px var(--shadow); border-color: var(--accent); }
         .polaroid-card.is-selected { border: 2px solid var(--select-border); transform: scale(0.98); }
         .polaroid-card.is-selected .card-img-area::after { content: '✓'; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--select-overlay); display: flex; align-items: center; justify-content: center; font-size: 40px; color: var(--select-border); font-weight: bold; text-shadow: 0 2px 5px rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
 
+        /* Grid 图片区 */
         .card-img-area { width: 100%; position: relative; background: rgba(128,128,128,0.05); min-height: 120px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer;}
         .card-img { width: 100%; display: block; height: auto; transition: transform 0.3s;}
         .no-img-label { font-size: 13px; color: var(--text-sub); letter-spacing: 1px;}
         .total-badge { position: absolute; top: 10px; left: 12px; z-index: 3; font-family: "Impact", sans-serif; font-size: 24px; font-weight: 900; color: var(--badge-text); background: var(--badge-bg); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); padding: 2px 8px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); pointer-events: none; letter-spacing: 1px; }
 
+        /* List 模式调整 */
         .masonry-grid.view-list .polaroid-card { display: flex; flex-direction: row; align-items: center; margin-bottom: 0; padding: 5px; height: 80px; }
         .masonry-grid.view-list .card-img-area { width: 70px; height: 70px; min-height: 70px; border-radius: 4px; margin-right: 10px; flex-shrink: 0; }
         .masonry-grid.view-list .card-img { height: 100%; width: 100%; object-fit: cover; }
@@ -257,9 +276,11 @@
         .masonry-grid.view-list .card-meta { margin-bottom: 0; font-size: 12px; }
         .masonry-grid.view-list .stock-row { display: inline-flex; padding: 2px 5px; margin-top: 0; margin-left: 10px; }
         .masonry-grid.view-list .stock-label { display: none; }
+        /* List模式下按钮本身就是可见的，保持原样即可 */
         .masonry-grid.view-list .btn-del, .masonry-grid.view-list .btn-edit, .masonry-grid.view-list .btn-copy { position: static; margin-left: 5px; width: 24px; height: 24px; font-size: 12px; background: var(--bg-panel); color: var(--text-sub); border: 1px solid var(--border); opacity: 1; }
         .masonry-grid.view-list .total-badge { font-size: 14px; top: 2px; left: 2px; }
 
+        /* Grid 信息区 */
         .card-info { padding: 15px; }
         .card-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px; }
         .card-title { font-weight: bold; font-size: 16px; line-height: 1.3; }
@@ -276,6 +297,7 @@
         .btn-mini { width: 32px; height: 32px; border-radius: 6px; background: var(--bg-panel); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; color: var(--text-main); user-select: none; font-weight: bold; box-shadow: 0 2px 0 rgba(0,0,0,0.1); }
         .btn-mini:active { transform: translateY(2px); box-shadow: none; }
         
+        /* 按钮 - 已优化：默认 opacity 为 1，手机端直接可见 */
         .btn-del { position: absolute; top: 8px; right: 42px; width: 30px; height: 30px; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; opacity: 1; transition: opacity 0.2s; cursor: pointer; z-index: 2; font-size: 18px; }
         .btn-copy { position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; opacity: 1; transition: opacity 0.2s; cursor: pointer; z-index: 2; font-size: 16px; }
         .btn-edit { position: absolute; top: 8px; right: 76px; width: 30px; height: 30px; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; opacity: 1; transition: opacity 0.2s; cursor: pointer; z-index: 2; font-size: 14px; }
@@ -312,10 +334,12 @@
         .help-content p { margin: 0 0 10px 0; color: var(--text-sub); }
         .help-content b { color: var(--text-main); }
         
+        /* 尺码标签 */
         .size-tags-container { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
         .size-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(128,128,128,0.1); border: 1px solid var(--border); color: var(--text-sub); user-select: none; }
         .size-tag b { color: var(--accent); }
         
+        /* 编辑尺码样式 */
         .edit-size-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg-body); padding: 5px 10px; margin-bottom: 5px; border-radius: 4px; border: 1px solid var(--border); }
         .edit-size-row span { font-weight: bold; }
         .edit-size-row input { width: 50px; padding: 4px; font-size: 12px; text-align: center; margin: 0 10px; background: var(--bg-panel); color: var(--text-main); border: 1px solid var(--border); border-radius: 4px; }
@@ -323,6 +347,16 @@
     </style>
 </head>
 <body>
+
+<div id="lockScreen">
+        <div class="lock-box">
+            <div class="lock-avatar">🔐</div>
+            <div class="lock-title">私人藏宝箱</div>
+            <input type="password" id="passInput" class="lock-input" placeholder="请输入密码" maxlength="20">
+            <button class="btn-unlock" onclick="checkPassword()">解 锁</button>
+            <div id="passMsg" style="color: #d32f2f; font-size: 12px; margin-top: 10px; min-height: 18px;"></div>
+        </div>
+    </div>
 
     <div class="main-wrapper">
         <div class="layout-sidebar" id="sidebar">
@@ -598,7 +632,9 @@
     <script src="https://unpkg.com/live2d-widget@3.1.4/lib/L2Dwidget.min.js"></script>
     
     <script>
-		
+        /* =========================================
+           1. 全局配置与数据核心
+        ========================================= */
         const currentModelName = 'koharu'; 
         const STORAGE_KEY = 'inventory_v7';
         const COLOR_KEY = 'wardrobe_colors_history';
@@ -629,6 +665,9 @@
             { id: 'jirai', icon: '🎀', name: '地雷' }
         ];
 
+        /* =========================================
+           2. AI 台词库
+        ========================================= */
         const waifuQuotes = {
 "normal": {
     "welcome:morning": [
@@ -985,7 +1024,7 @@
       "啧，这么贵也下手？勇气可嘉……钱包要哭了哦～"
     ]
   },
-"passion": {
+  "passion": {
     "click:newCat:袜子": [
       "新袜子好可爱～黑丝白丝都有哦，你最喜欢哪一种呀～嘻嘻～",
       "过膝袜超级百搭～卷上去的时候大腿看起来更修长，你会多看几眼吧～",
@@ -1204,6 +1243,9 @@
             initWaifuInteractions();// 8. 绑定交互
         };
 
+        /* =========================================
+           3. 核心业务逻辑 (CRUD)
+        ========================================= */
         function addItem() { 
             const mb=updateStorageInfo(); if(mb>=MAX_STORAGE_MB){alert("⛔ 宝箱已满！");return;} 
             const cat=document.getElementById('newCat').value, name=document.getElementById('newName').value.trim(), price=parseFloat(document.getElementById('newPrice').value)||0, color=document.getElementById('newColor').value, remark=document.getElementById('newRemark').value.trim(), file=document.getElementById('newImg').files[0], initQty=parseInt(document.getElementById('newQty').value)||1; 
@@ -1306,6 +1348,7 @@
             renderFilterBar(visibleColors);
         }
 
+        // --- 辅助功能 ---
         function toggleViewMode() { currentView = currentView === 'grid' ? 'list' : 'grid'; document.getElementById('viewIcon').innerText = currentView === 'grid' ? '🖼️' : '📝'; renderList(); say('click:toggleView'); }
         function openEditModal(id) { 
             const item=inventory.find(x=>x.id===id); if(!item)return; 
@@ -1590,6 +1633,9 @@ function importDataFile() {
             }
         }
 
+        /* =========================================
+           4. 看板娘逻辑核心
+        ========================================= */
         function initWaifuInteractions() { 
             // 鼠标追踪
             document.addEventListener('mousemove', (e)=>{ 
@@ -1750,6 +1796,60 @@ function initWaifuDrag() {
         }
         function renderThemeButtons(id) { const c=document.getElementById('themeGroup'); c.innerHTML=''; themes.forEach(t=>{ const b=document.createElement('div'); b.className=`theme-btn ${id===t.id?'active':''}`; b.innerText=t.icon; b.title=t.name; b.onclick=()=>setTheme(t.id); c.appendChild(b); }); }
     	
+			/* =========================================
+           新增：密码锁定逻辑
+        ========================================= */
+        
+        // ⚠️ 在这里设置你的密码 (默认为 123456)
+        const MY_PASSWORD = "123mzynt"; 
+
+        // 绑定回车键：在输入框按回车直接解锁
+        document.getElementById('passInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+
+        // 页面加载时让输入框自动获得焦点
+        window.addEventListener('load', function() {
+            // 延迟一点点确保元素渲染
+            setTimeout(() => {
+                const input = document.getElementById('passInput');
+                if(input) input.focus();
+            }, 300);
+        });
+
+        function checkPassword() {
+            const input = document.getElementById('passInput');
+            const msg = document.getElementById('passMsg');
+            const val = input.value;
+
+            if (val === MY_PASSWORD) {
+                // 1. 密码正确，添加解锁类（向上滑动动画）
+                document.getElementById('lockScreen').classList.add('unlocked');
+                
+                // 2. 隐藏错误提示
+                msg.innerText = "";
+                
+                // 3. (可选) 让看板娘说句欢迎词
+                // 延时 500ms 等动画做完再说，避免卡顿
+                setTimeout(() => {
+                    if (typeof say === 'function') {
+                        say('welcome');
+                    }
+                }, 500);
+
+            } else {
+                // 密码错误
+                msg.innerText = "❌ 密码错误，禁止访问！";
+                input.value = ""; // 清空输入框
+                input.focus();    // 重新聚焦
+                
+                // 错误时抖动一下输入框
+                input.style.borderColor = "#d32f2f";
+                setTimeout(() => input.style.borderColor = "var(--border)", 500);
+            }
+        }
 	
 	</script>
 	<script>
@@ -1763,4 +1863,3 @@ function initWaifuDrag() {
 </script>
 </body>
 </html>
-
