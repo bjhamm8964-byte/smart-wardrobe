@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wardrobe-cache-v9.16';
+const CACHE_NAME = 'wardrobe-cache-v9.19';
 // 这里列出所有必须缓存的文件
 const ASSETS_TO_CACHE = [
   './',
@@ -69,6 +69,7 @@ self.addEventListener('fetch', (event) => {
   );
 
 });
+
 
 
 
