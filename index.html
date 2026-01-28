@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>我的藏宝箱 V9.19 (无限容量版)</title>
+    <title>我的藏宝箱 V9.2 </title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -12,9 +12,6 @@
     <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
 
     <style>
-        /* =========================================
-           优化版：锁定屏幕样式 (更工整、高级)
-        ========================================= */
         #lockScreen {
             position: fixed;
             top: 0;
@@ -1735,17 +1732,71 @@ function renderList() {
                 tips.style.right='auto'; 
             } 
         }
-        function initWaifuDrag() { 
-            const c=document.getElementById('live2dcanvas'); 
-            if(!c)return; 
-            let isD=false,sX,sY,iL,iT; 
-            const r=c.getBoundingClientRect(); 
-            c.style.bottom='auto'; c.style.right='auto'; c.style.left=r.left+'px'; c.style.top=r.top+'px'; c.style.position='fixed'; 
+function initWaifuDrag() { 
+    const c = document.getElementById('live2dcanvas'); 
+    if(!c) return; 
+    
+    let isD = false, sX, sY, iL, iT; 
+    const r = c.getBoundingClientRect(); 
+    
+    // 初始化位置固定
+    c.style.bottom = 'auto'; c.style.right = 'auto'; 
+    c.style.left = r.left + 'px'; c.style.top = r.top + 'px'; 
+    c.style.position = 'fixed'; 
+    updateTipsPosition(c); 
+
+    // --- 核心工具：兼容鼠标和手指坐标 ---
+    function getClientPos(e) {
+        // 如果是触摸事件(e.touches存在)，就取第一个手指的位置；否则取鼠标位置
+        return e.touches ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : { x: e.clientX, y: e.clientY };
+    }
+
+    // 按下/触摸开始
+    const start = (e) => { 
+        isD = true; 
+        const pos = getClientPos(e);
+        sX = pos.x; 
+        sY = pos.y; 
+        const cr = c.getBoundingClientRect(); 
+        iL = cr.left; 
+        iT = cr.top; 
+        c.style.cursor = 'grabbing'; 
+        say('drag'); 
+        // 关键：阻止手机端默认的滚动屏幕行为
+        if(e.touches) e.preventDefault(); 
+    }; 
+
+    // 移动/拖动
+    const move = (e) => { 
+        if(isD) { 
+            const pos = getClientPos(e);
+            const dx = pos.x - sX; 
+            const dy = pos.y - sY; 
+            c.style.left = (iL + dx) + 'px'; 
+            c.style.top = (iT + dy) + 'px'; 
             updateTipsPosition(c); 
-            c.addEventListener('mousedown',(e)=>{isD=true;sX=e.clientX;sY=e.clientY;const cr=c.getBoundingClientRect();iL=cr.left;iT=cr.top;c.style.cursor='grabbing';say('drag');}); 
-            document.addEventListener('mousemove',(e)=>{if(isD){const dx=e.clientX-sX,dy=e.clientY-sY;c.style.left=(iL+dx)+'px';c.style.top=(iT+dy)+'px';updateTipsPosition(c);}}); 
-            document.addEventListener('mouseup',()=>{isD=false;c.style.cursor='grab';}); 
-        }
+            // 移动时也要阻止屏幕滚动
+            if(e.touches) e.preventDefault(); 
+        } 
+    }; 
+
+    // 松开/触摸结束
+    const end = () => { 
+        isD = false; 
+        c.style.cursor = 'grab'; 
+    }; 
+
+    // 1. 绑定 PC 鼠标事件
+    c.addEventListener('mousedown', start); 
+    document.addEventListener('mousemove', move); 
+    document.addEventListener('mouseup', end); 
+
+    // 2. 绑定 手机 触摸事件 (新增)
+    // passive: false 是为了能使用 preventDefault() 阻止屏幕滚动
+    c.addEventListener('touchstart', start, { passive: false }); 
+    document.addEventListener('touchmove', move, { passive: false }); 
+    document.addEventListener('touchend', end); 
+}
         function initTheme() { const t=localStorage.getItem(THEME_KEY)||'passion'; setTheme(t); }
         function setTheme(id) { 
             document.documentElement.setAttribute('data-theme',id); 
@@ -1799,4 +1850,5 @@ function renderList() {
 	</script>
 </body>
 </html>
+
 
