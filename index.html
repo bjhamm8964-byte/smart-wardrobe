@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>我的藏宝箱 V9.17</title>
-	<link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="apple-touch-icon" href="./icon.png">
+    <title>我的藏宝箱 V9.16 (无限容量版)</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1063/1063376.png">
+    
+    <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+
     <style>
-/* =========================================
+        /* =========================================
            优化版：锁定屏幕样式 (更工整、高级)
         ========================================= */
         #lockScreen {
@@ -23,111 +26,80 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1); /* 更平滑的开锁动画 */
-            /* 稍微加深一点背景纹理 */
+            transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
             background-image: radial-gradient(circle at center, #1a1a1a 0%, #000 100%); 
         }
-        
         #lockScreen.unlocked {
-            transform: translateY(-100%) scale(0.9); /* 向上滑动并轻微缩小，增加层次感 */
+            transform: translateY(-100%) scale(0.9);
             opacity: 0;
             pointer-events: none;
         }
-
         .lock-box {
-            background: rgba(30, 30, 30, 0.8); /* 半透明背景 */
-            backdrop-filter: blur(10px);        /* 磨砂玻璃效果 */
+            background: rgba(30, 30, 30, 0.8);
+            backdrop-filter: blur(10px);
             padding: 40px 30px;
             border-radius: 16px;
-            border: 1px solid rgba(197, 160, 89, 0.3); /* 淡淡的金边 */
+            border: 1px solid rgba(197, 160, 89, 0.3);
             box-shadow: 0 15px 35px rgba(0,0,0,0.6);
             text-align: center;
             width: 85%;
             max-width: 320px;
             display: flex;
             flex-direction: column;
-            gap: 20px; /* 统一控制所有元素之间的间距 */
+            gap: 20px;
         }
-
         .lock-avatar {
             font-size: 48px;
-            margin-top: -10px; /* 稍微向上修正视觉重心 */
-            filter: drop-shadow(0 0 10px var(--accent)); /* 图标发光 */
+            margin-top: -10px;
+            filter: drop-shadow(0 0 10px var(--accent));
         }
-
         .lock-title {
             color: var(--accent);
             font-size: 18px;
             font-weight: bold;
             letter-spacing: 3px;
             text-transform: uppercase;
-            margin: 0; /* 清除默认边距，由父级 gap 控制 */
+            margin: 0;
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
-
         .lock-input {
             width: 100%;
             height: 48px;
             padding: 0 15px;
-            font-size: 16px; /* 防止手机端输入自动放大 */
+            font-size: 16px;
             text-align: center;
             background: rgba(0, 0, 0, 0.4);
             border: 1px solid var(--border);
             border-radius: 8px;
-            color: var(--accent); /* 输入文字也是金色 */
+            color: var(--accent);
             outline: none;
             transition: all 0.3s ease;
-            box-sizing: border-box; /* 确保 padding 不会撑大宽度 */
-            letter-spacing: 2px; /* 密码圆点间距大一点更好看 */
+            box-sizing: border-box;
+            letter-spacing: 2px;
         }
-
-        .lock-input::placeholder {
-            color: rgba(255, 255, 255, 0.3);
-            letter-spacing: 1px;
-            font-size: 14px;
-        }
-
-        .lock-input:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 15px var(--select-overlay);
-            background: rgba(0, 0, 0, 0.6);
-        }
-
+        .lock-input::placeholder { color: rgba(255, 255, 255, 0.3); letter-spacing: 1px; font-size: 14px; }
+        .lock-input:focus { border-color: var(--accent); box-shadow: 0 0 15px var(--select-overlay); background: rgba(0, 0, 0, 0.6); }
         .btn-unlock {
             width: 100%;
             height: 48px;
-            background: var(--accent); /* 纯金色按钮 */
-            color: #121212; /* 黑色文字形成高对比 */
+            background: var(--accent);
+            color: #121212;
             border: none;
             border-radius: 8px;
             font-size: 16px;
-            font-weight: 800; /* 加粗 */
+            font-weight: 800;
             cursor: pointer;
             transition: transform 0.1s, filter 0.2s;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             letter-spacing: 4px;
-            text-indent: 4px; /* 修正 letter-spacing 带来的居中偏差 */
+            text-indent: 4px;
         }
-        
-        .btn-unlock:hover { 
-            filter: brightness(1.1); 
-        }
-        
-        .btn-unlock:active { 
-            transform: scale(0.98); 
-        }
-
-        /* 错误提示文字 */
-        #passMsg {
-            color: #ff4d4d;
-            font-size: 13px;
-            min-height: 20px;
-            font-weight: bold;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-        }
+        .btn-unlock:hover { filter: brightness(1.1); }
+        .btn-unlock:active { transform: scale(0.98); }
+        #passMsg { color: #ff4d4d; font-size: 13px; min-height: 20px; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
 	
         /* =========================================
-           1. 核心变量系统
+           核心变量系统
         ========================================= */
         :root {
             --bg-body: #121212; --bg-panel: #1e1e1e; --text-main: #fffff0; --text-sub: #aaa;
@@ -137,8 +109,6 @@
             --badge-text: #fff; --badge-bg: rgba(0, 0, 0, 0.4);
             --select-overlay: rgba(197, 160, 89, 0.2); --select-border: #c5a059;
         }
-        
-        /* 主题定义 */
         [data-theme="passion"] { --bg-body: #121212; --bg-panel: #1e1e1e; --text-main: #fffff0; --text-sub: #aaa; --border: #800020; --accent: #c5a059; --btn-bg: #800020; --btn-text: #fff; --highlight-bg: #2a1a1a; --shadow: rgba(0, 0, 0, 0.5); --scroll-btn-bg: rgba(30, 30, 30, 0.9); --progress-bg: #333; --progress-fill: #c5a059; --select-overlay: rgba(197, 160, 89, 0.2); --select-border: #c5a059; }
         [data-theme="ladies"] { --bg-body: #f9f7f2; --bg-panel: #ffffff; --text-main: #4a4a4a; --text-sub: #999; --border: #dba4a4; --accent: #d4af37; --btn-bg: #dba4a4; --btn-text: #fff; --highlight-bg: #fff0f5; --shadow: rgba(219, 164, 164, 0.15); --scroll-btn-bg: rgba(255, 255, 255, 0.9); --progress-bg: #eee; --progress-fill: #dba4a4; --badge-text: #fff; --badge-bg: rgba(0, 0, 0, 0.25); --select-overlay: rgba(212, 175, 55, 0.1); --select-border: #d4af37; }
         [data-theme="men"] { --bg-body: #0b1a2f; --bg-panel: #172a45; --text-main: #e6f1ff; --text-sub: #8892b0; --border: #4b5563; --accent: #a8b2d1; --btn-bg: #334155; --btn-text: #fff; --highlight-bg: #1c3557; --shadow: rgba(0, 0, 0, 0.3); --scroll-btn-bg: rgba(23, 42, 69, 0.9); --progress-bg: #0f1f3a; --progress-fill: #4a90e2; --select-overlay: rgba(74, 144, 226, 0.2); --select-border: #4a90e2; }
@@ -146,16 +116,8 @@
         [data-theme="daily"] { --bg-body: #f0f2f5; --bg-panel: #ffffff; --text-main: #333333; --text-sub: #666; --border: #e0e0e0; --accent: #4a90e2; --btn-bg: #4a90e2; --btn-text: #fff; --highlight-bg: #eef6ff; --shadow: rgba(0, 0, 0, 0.05); --scroll-btn-bg: rgba(255, 255, 255, 0.9); --progress-bg: #eee; --progress-fill: #4a90e2; --select-overlay: rgba(74, 144, 226, 0.1); --select-border: #4a90e2;}
         [data-theme="night"] { --bg-body: #000000; --bg-panel: #111111; --text-main: #e0e0e0; --text-sub: #888; --border: #ff007f; --accent: #9d00ff; --btn-bg: #ff007f; --btn-text: #fff; --highlight-bg: #220011; --shadow: rgba(255, 0, 127, 0.2); --scroll-btn-bg: rgba(17, 17, 17, 0.9); --progress-bg: #222; --progress-fill: #ff007f; --select-overlay: rgba(255, 0, 127, 0.2); --select-border: #ff007f;}
         [data-theme="wood"] { --bg-body: #e8dcc5; --bg-panel: #fdfbf7; --text-main: #5d4037; --text-sub: #8d6e63; --border: #a1887f; --accent: #d4a017; --btn-bg: #6d4c41; --btn-text: #fff; --highlight-bg: #fff8e1; --shadow: rgba(93, 64, 55, 0.1); --scroll-btn-bg: rgba(253, 251, 247, 0.9); --progress-bg: #d7ccc8; --progress-fill: #8d6e63; --badge-bg: rgba(0, 0, 0, 0.3); --select-overlay: rgba(212, 160, 23, 0.1); --select-border: #d4a017;}
-        [data-theme="jirai"] {
-            --bg-body: #fff0f5; --bg-panel: #ffffff; --text-main: #000000; --text-sub: #666666;
-            --border: #000000; --accent: #ff007f; --btn-bg: #000000; --btn-text: #ff007f;
-            --highlight-bg: #fff5fa; --shadow: rgba(255, 0, 127, 0.2);
-            --scroll-btn-bg: rgba(255, 255, 255, 0.9); --progress-bg: #e0e0e0; --progress-fill: #ff007f;
-            --badge-text: #fff; --badge-bg: rgba(0, 0, 0, 0.8);
-            --select-overlay: rgba(255, 0, 127, 0.1); --select-border: #ff007f;
-        }
+        [data-theme="jirai"] { --bg-body: #fff0f5; --bg-panel: #ffffff; --text-main: #000000; --text-sub: #666666; --border: #000000; --accent: #ff007f; --btn-bg: #000000; --btn-text: #ff007f; --highlight-bg: #fff5fa; --shadow: rgba(255, 0, 127, 0.2); --scroll-btn-bg: rgba(255, 255, 255, 0.9); --progress-bg: #e0e0e0; --progress-fill: #ff007f; --badge-text: #fff; --badge-bg: rgba(0, 0, 0, 0.8); --select-overlay: rgba(255, 0, 127, 0.1); --select-border: #ff007f; }
 
-        /* 基础布局 */
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 10px; background-color: var(--bg-body); color: var(--text-main); background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 20px 20px; transition: background 0.3s ease, color 0.3s ease; -webkit-text-size-adjust: 100%; }
         .main-wrapper { display: block; padding-bottom: 50px;}
         @media (min-width: 768px) {
@@ -167,33 +129,15 @@
         }
         .wood-panel { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px var(--shadow); transition: all 0.3s ease; }
         
-        /* 统计栏样式 */
         .storage-bar-area { margin-bottom: 10px; padding: 0 5px; }
         .storage-text { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-sub); margin-bottom: 4px; }
         .storage-track { width: 100%; height: 6px; background: var(--progress-bg); border-radius: 3px; overflow: hidden; }
         .storage-fill { height: 100%; width: 0%; background: var(--progress-fill); transition: width 0.5s ease; }
-        .storage-fill.danger { background: #d32f2f !important; }
         .time-dashboard { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 15px; text-align: center; box-shadow: 0 2px 5px var(--shadow); }
         .time-label { font-size: 12px; color: var(--text-sub); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px;}
         .time-value { font-size: 20px; font-weight: bold; color: var(--accent); font-family: monospace; letter-spacing: 0.5px; }
         
-        /* 文件名标签 (新增) */
-        .file-tag {
-            font-size: 12px;
-            background: var(--accent);
-            color: var(--bg-panel);
-            padding: 2px 8px;
-            border-radius: 4px;
-            margin-right: 8px;
-            vertical-align: middle;
-            font-weight: bold;
-            display: none; /* 默认隐藏 */
-            box-shadow: 0 2px 4px var(--shadow);
-            max-width: 150px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+        .file-tag { font-size: 12px; background: var(--accent); color: var(--bg-panel); padding: 2px 8px; border-radius: 4px; margin-right: 8px; vertical-align: middle; font-weight: bold; display: none; box-shadow: 0 2px 4px var(--shadow); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
         .stats-wrapper { position: relative; display: flex; align-items: center; }
         .stats-container { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; scroll-behavior: smooth; width: 100%; }
@@ -210,7 +154,6 @@
         .stat-title { font-size: 12px; opacity: 0.8; margin-bottom: 5px; font-weight: bold;}
         .stat-val { font-size: 18px; font-weight: bold; }
 
-        /* 输入控件 */
         .input-group { margin-bottom: 15px; }
         input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-panel); outline: none; box-sizing: border-box; color: var(--text-main); font-size: 14px; }
         input:focus, textarea:focus { border-color: var(--accent); }
@@ -234,7 +177,6 @@
         .btn-waifu-toggle { margin-top: 10px; width: 100%; padding: 10px; background: var(--bg-panel); border: 1px solid var(--border); color: var(--text-sub); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all 0.2s; }
         .btn-waifu-toggle:hover { color: var(--accent); border-color: var(--accent); }
 
-        /* 顶部筛选区 */
         .filter-sticky { position: sticky; top: 0; z-index: 10; background: var(--bg-body); padding-top: 5px; margin-bottom: 20px; transition: background 0.3s;}
         .search-input { width: 100%; padding: 12px 15px; border: 1px solid var(--border); border-radius: 25px; font-size: 15px; box-shadow: 0 2px 5px var(--shadow); background: var(--bg-panel); color: var(--text-main);}
         .filter-controls { display: flex; gap: 10px; margin-top: 10px; align-items: center; }
@@ -245,28 +187,22 @@
         .filter-dot.active { border-color: var(--text-main); transform: scale(1.1); }
         .filter-dot.active::after { content: '✓'; position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); color: #fff; text-shadow: 0 0 3px #000; font-weight: bold;}
 
-        /* --- 视图模式 (Grid vs List) --- */
         .masonry-grid { column-count: 2; column-gap: 20px; transition: opacity 0.3s; }
         @media (min-width: 900px) { .masonry-grid { column-count: 3; } }
         @media (min-width: 1400px) { .masonry-grid { column-count: 4; } }
         @media (min-width: 1800px) { .masonry-grid { column-count: 5; } }
-
-        /* 列表模式 */
         .masonry-grid.view-list { column-count: 1 !important; display: flex; flex-direction: column; gap: 10px; }
 
-/* 卡片 - 已修复iOS横屏图片消失bug (去除了transform) */
-        .polaroid-card { background: var(--bg-panel); border-radius: 8px; margin-bottom: 20px; break-inside: avoid; box-shadow: 0 4px 8px var(--shadow); overflow: hidden; border: 1px solid var(--border); transition: transform 0.2s; color: var(--text-main); position: relative;}
+        .polaroid-card { background: var(--bg-panel); border-radius: 8px; margin-bottom: 20px; break-inside: avoid; box-shadow: 0 4px 8px var(--shadow); overflow: hidden; transform: translateZ(0); border: 1px solid var(--border); transition: transform 0.2s; color: var(--text-main); position: relative;}
         .polaroid-card:hover { transform: translateY(-3px); box-shadow: 0 8px 16px var(--shadow); border-color: var(--accent); }
         .polaroid-card.is-selected { border: 2px solid var(--select-border); transform: scale(0.98); }
         .polaroid-card.is-selected .card-img-area::after { content: '✓'; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--select-overlay); display: flex; align-items: center; justify-content: center; font-size: 40px; color: var(--select-border); font-weight: bold; text-shadow: 0 2px 5px rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
 
-        /* Grid 图片区 */
         .card-img-area { width: 100%; position: relative; background: rgba(128,128,128,0.05); min-height: 120px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer;}
         .card-img { width: 100%; display: block; height: auto; transition: transform 0.3s;}
         .no-img-label { font-size: 13px; color: var(--text-sub); letter-spacing: 1px;}
         .total-badge { position: absolute; top: 10px; left: 12px; z-index: 3; font-family: "Impact", sans-serif; font-size: 24px; font-weight: 900; color: var(--badge-text); background: var(--badge-bg); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); padding: 2px 8px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); pointer-events: none; letter-spacing: 1px; }
 
-        /* List 模式调整 */
         .masonry-grid.view-list .polaroid-card { display: flex; flex-direction: row; align-items: center; margin-bottom: 0; padding: 5px; height: 80px; }
         .masonry-grid.view-list .card-img-area { width: 70px; height: 70px; min-height: 70px; border-radius: 4px; margin-right: 10px; flex-shrink: 0; }
         .masonry-grid.view-list .card-img { height: 100%; width: 100%; object-fit: cover; }
@@ -276,11 +212,9 @@
         .masonry-grid.view-list .card-meta { margin-bottom: 0; font-size: 12px; }
         .masonry-grid.view-list .stock-row { display: inline-flex; padding: 2px 5px; margin-top: 0; margin-left: 10px; }
         .masonry-grid.view-list .stock-label { display: none; }
-        /* List模式下按钮本身就是可见的，保持原样即可 */
         .masonry-grid.view-list .btn-del, .masonry-grid.view-list .btn-edit, .masonry-grid.view-list .btn-copy { position: static; margin-left: 5px; width: 24px; height: 24px; font-size: 12px; background: var(--bg-panel); color: var(--text-sub); border: 1px solid var(--border); opacity: 1; }
         .masonry-grid.view-list .total-badge { font-size: 14px; top: 2px; left: 2px; }
 
-        /* Grid 信息区 */
         .card-info { padding: 15px; }
         .card-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px; }
         .card-title { font-weight: bold; font-size: 16px; line-height: 1.3; }
@@ -297,13 +231,11 @@
         .btn-mini { width: 32px; height: 32px; border-radius: 6px; background: var(--bg-panel); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; color: var(--text-main); user-select: none; font-weight: bold; box-shadow: 0 2px 0 rgba(0,0,0,0.1); }
         .btn-mini:active { transform: translateY(2px); box-shadow: none; }
         
-        /* 按钮 - 已优化：默认 opacity 为 1，手机端直接可见 */
-        .btn-del { position: absolute; top: 8px; right: 42px; width: 30px; height: 30px; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; opacity: 1; transition: opacity 0.2s; cursor: pointer; z-index: 2; font-size: 18px; }
-        .btn-copy { position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; opacity: 1; transition: opacity 0.2s; cursor: pointer; z-index: 2; font-size: 16px; }
-        .btn-edit { position: absolute; top: 8px; right: 76px; width: 30px; height: 30px; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; opacity: 1; transition: opacity 0.2s; cursor: pointer; z-index: 2; font-size: 14px; }
-        /* 下面这行保留以防万一，但实际上 opacity 已经是 1 了 */
+        .btn-del { position: absolute; top: 8px; right: 42px; width: 30px; height: 30px; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; cursor: pointer; z-index: 2; font-size: 18px; }
+        .btn-copy { position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; cursor: pointer; z-index: 2; font-size: 16px; }
+        .btn-edit { position: absolute; top: 8px; right: 76px; width: 30px; height: 30px; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; cursor: pointer; z-index: 2; font-size: 14px; }
         .polaroid-card:hover .btn-del, .polaroid-card:hover .btn-edit, .polaroid-card:hover .btn-copy { opacity: 1; }
-		
+
         .batch-actions { display: flex; gap: 10px; margin-bottom: 15px; padding: 10px; background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; align-items: center; justify-content: space-between; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .btn-batch-toggle { width: 100%; padding: 10px; margin-bottom: 10px; background: transparent; border: 1px dashed var(--accent); color: var(--accent); border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; transition: all 0.2s; }
@@ -334,12 +266,10 @@
         .help-content p { margin: 0 0 10px 0; color: var(--text-sub); }
         .help-content b { color: var(--text-main); }
         
-        /* 尺码标签 */
         .size-tags-container { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
         .size-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(128,128,128,0.1); border: 1px solid var(--border); color: var(--text-sub); user-select: none; }
         .size-tag b { color: var(--accent); }
         
-        /* 编辑尺码样式 */
         .edit-size-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg-body); padding: 5px 10px; margin-bottom: 5px; border-radius: 4px; border: 1px solid var(--border); }
         .edit-size-row span { font-weight: bold; }
         .edit-size-row input { width: 50px; padding: 4px; font-size: 12px; text-align: center; margin: 0 10px; background: var(--bg-panel); color: var(--text-main); border: 1px solid var(--border); border-radius: 4px; }
@@ -365,8 +295,7 @@
                 <span style="display:flex; align-items:center; gap:10px;">📜 <span>我的藏宝箱</span></span>
             </h2>
             <div class="storage-bar-area">
-                <div class="storage-text"><span>📦 空间: <span id="storageSize">0</span> / 5MB</span><span id="storagePercent">0%</span></div>
-                <div class="storage-track"><div class="storage-fill" id="storageFill" style="width: 0%"></div></div>
+                <div class="storage-text"><span>📦 空间: 无限 (IndexedDB)</span></div>
             </div>
             <div class="time-dashboard">
                 <div class="time-label">📅 最近更新时间</div>
@@ -641,9 +570,11 @@
         const THEME_KEY = 'wardrobe_theme';
         const UPDATE_KEY = 'wardrobe_last_update'; 
         const WAIFU_KEY = 'wardrobe_waifu_visible';
-        const MAX_STORAGE_MB = 4.8; 
         
-        let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        // 注意：localForage 使用 IndexedDB，无需计算容量限制，但为了代码健壮性保留变量
+        const MAX_STORAGE_MB = 99999; 
+        
+        let inventory = [];
         let recentColors = JSON.parse(localStorage.getItem(COLOR_KEY)) || ["#5d4037", "#a1887f", "#d4a017", "#2c3e50", "#ffffff", "#8b0000"];
         let lastUpdateTime = localStorage.getItem(UPDATE_KEY) || "暂无记录";
         let activeColorFilter = null;
@@ -666,7 +597,8 @@
         ];
 
         /* =========================================
-           2. AI 台词库
+           2. AI 台词库 (已清空)
+           在此处填入你的台词数据
         ========================================= */
         const waifuQuotes = {
 "normal": {
@@ -1231,47 +1163,86 @@
   }
         };
 
-        // --- 初始化流程 ---
-        window.onload = function() {
-            initTheme();          // 1. 初始化主题
-            renderRecentColors(); // 2. 渲染颜色
-            updateStorageInfo();  // 3. 更新容量
-            updateTimeDisplay();  // 4. 更新时间
-            renderList();         // 5. 渲染列表
-            initPCScroll();       // 6. PC滚轮支持
-            initWaifu();          // 7. 召唤看板娘
-            initWaifuInteractions();// 8. 绑定交互
+        // --- 初始化流程 (异步改造) ---
+        window.onload = async function() {
+            // 1. 初始化 localForage
+            localforage.config({ name: 'MyTreasureBox' });
+
+            // 2. 异步读取数据
+            try {
+                const data = await localforage.getItem(STORAGE_KEY);
+                inventory = data || []; 
+            } catch(err) {
+                console.error("读取失败", err);
+                inventory = [];
+            }
+
+            // 3. 继续后续初始化
+            initTheme();          
+            renderRecentColors(); 
+            updateTimeDisplay();  
+            renderList();         
+            initPCScroll();       
+            initWaifu();          
+            initWaifuInteractions();
         };
 
         /* =========================================
-           3. 核心业务逻辑 (CRUD)
+           3. 核心业务逻辑 (CRUD) - 异步改造
         ========================================= */
-        function addItem() { 
-            const mb=updateStorageInfo(); if(mb>=MAX_STORAGE_MB){alert("⛔ 宝箱已满！");return;} 
+        
+        // 核心：保存数据库 (Async)
+        async function updateDB() { 
+            try {
+                await localforage.setItem(STORAGE_KEY, inventory);
+                renderList(); 
+                // recordUpdateTime(); // 更新时间通常在操作时单独记录
+            } catch (err) {
+                alert("❌ 保存失败：" + err);
+                console.error(err);
+            }
+        }
+
+        // 添加物品 (Async)
+        const addItem = () => { 
+            // IndexedDB 空间极大，不再进行 5MB 检查
             const cat=document.getElementById('newCat').value, name=document.getElementById('newName').value.trim(), price=parseFloat(document.getElementById('newPrice').value)||0, color=document.getElementById('newColor').value, remark=document.getElementById('newRemark').value.trim(), file=document.getElementById('newImg').files[0], initQty=parseInt(document.getElementById('newQty').value)||1; 
             const initSize = document.getElementById('newSize').value.trim();
             
             if(!name){alert("请输入名称");return;} 
             saveColorToHistory(color); 
             
-            const save=(img)=>{ 
+            const save = async (img) => { 
                 const item = {
                     id:Date.now(),cat,name,price,color,remark,img,
                     newQty:initQty, usedQty:0,
                     sizeNew: initSize ? { [initSize]: initQty } : {},
                     sizeUsed: {}
                 }; 
-                const s=JSON.stringify(item); 
-                if(mb+(s.length*2/1048576)>5){alert("⚠️ 图片太大！");return;} 
+                
                 inventory.unshift(item); 
-                try{updateDB();resetForm();recordUpdateTime();say('click:save');}catch(e){inventory.shift();alert("⛔ 空间耗尽！");} 
+                
+                try {
+                    await updateDB(); // 等待写入
+                    resetForm();
+                    recordUpdateTime();
+                    say('click:save');
+                } catch(e) {
+                    inventory.shift();
+                    alert("⛔ 保存出错: " + e.message);
+                } 
             }; 
             if(file){compressImage(file,save);}else{save(null);} 
         }
 
-        function renderList() {
+function renderList() {
             const listEl = document.getElementById('itemList');
-            const search = document.getElementById('searchBox').value.toLowerCase();
+            // --- 修改点 A：获取输入并按空格切割成关键词数组 ---
+            const searchRaw = document.getElementById('searchBox').value.toLowerCase().trim();
+            // 如果输入为空，关键词数组就是空；如果不为空，按空格(一个或多个)分割
+            const keywords = searchRaw ? searchRaw.split(/\s+/) : []; 
+            // ------------------------------------------------
+
             const sortType = document.getElementById('sortSelect').value;
             
             listEl.className = `masonry-grid ${currentView === 'list' ? 'view-list' : ''}`;
@@ -1281,9 +1252,19 @@
             let visibleColors = new Set();
             
             let filteredItems = inventory.filter(item => {
-                const matchText = item.name.toLowerCase().includes(search) || item.cat.includes(search);
+                // --- 修改点 B：电商式多关键词匹配逻辑 ---
+                // 1. 把这个物品所有相关的文字拼成一个大字符串 (名称 + 分类 + 备注)
+                const itemFullText = (item.name + " " + item.cat + " " + (item.remark || "")).toLowerCase();
+                
+                // 2. 检查：是不是“每一个”关键词都在这个大字符串里？
+                // (如果关键词数组是空的，说明没输内容，默认算匹配成功)
+                const matchText = keywords.length === 0 ? true : keywords.every(k => itemFullText.includes(k));
+                // --------------------------------------
+
                 const matchColor = activeColorFilter ? (item.color === activeColorFilter) : true;
                 const matchCat = activeCategoryFilter ? (item.cat === activeCategoryFilter) : true;
+                
+                // 只有 文字匹配 AND 颜色匹配 AND 分类匹配 都满足，才保留
                 return matchText && matchColor && matchCat;
             });
 
@@ -1367,7 +1348,8 @@
             document.getElementById('editModal').style.display='flex'; 
         }
         function closeEditModal() { document.getElementById('editModal').style.display='none'; }
-        function saveEdit() { 
+        
+        async function saveEdit() { 
             const id=parseInt(document.getElementById('editId').value), item=inventory.find(x=>x.id===id); if(!item)return; 
             item.cat=document.getElementById('editCat').value; 
             item.name=document.getElementById('editName').value; 
@@ -1380,8 +1362,21 @@
                 item.newQty = totalNew;
             }
             const f=document.getElementById('editImg').files[0]; 
-            if(f){compressImage(f,(d)=>{item.img=d;updateDB();closeEditModal();recordUpdateTime();say('click:edit');});}
-            else{updateDB();closeEditModal();recordUpdateTime();say('click:edit');} 
+            
+            if(f){
+                compressImage(f, async (d)=>{
+                    item.img=d;
+                    await updateDB();
+                    closeEditModal();
+                    recordUpdateTime();
+                    say('click:edit');
+                });
+            } else {
+                await updateDB();
+                closeEditModal();
+                recordUpdateTime();
+                say('click:edit');
+            } 
         }
         
         function renderEditSizes(item) {
@@ -1429,8 +1424,29 @@
             }
         }
 
-        function compressImage(f,cb) { if(f.size>10485760){alert("⚠️ >10MB");return;} const r=new FileReader(); r.onload=(e)=>{const i=new Image();i.src=e.target.result;i.onload=()=>{const c=document.createElement('canvas');let mw=500,q=0.6,w=i.width,h=i.height;if(w>mw){h*=mw/w;w=mw;}c.width=w;c.height=h;c.getContext('2d').drawImage(i,0,0,w,h);let d=c.toDataURL('image/jpeg',q);if(d.length>512000)d=c.toDataURL('image/jpeg',0.3);if(d.length>614400){alert("⚠️ 图片仍过大");return;}cb(d);}};r.readAsDataURL(f); }
-        function updateDB() { localStorage.setItem(STORAGE_KEY,JSON.stringify(inventory)); renderList(); updateStorageInfo(); }
+        function compressImage(f,cb) { 
+            // 如果使用无限容量，这里可以适当放宽 10MB 的限制，或者使用更高质量的 WebP
+            if(f.size>20485760){alert("⚠️ >20MB，这也太大了吧！");return;} 
+            const r=new FileReader(); 
+            r.onload=(e)=>{
+                const i=new Image();
+                i.src=e.target.result;
+                i.onload=()=>{
+                    const c=document.createElement('canvas');
+                    let mw=500, q=0.6, w=i.width, h=i.height;
+                    if(w>mw){h*=mw/w;w=mw;}
+                    c.width=w;c.height=h;
+                    c.getContext('2d').drawImage(i,0,0,w,h);
+                    // 尝试使用 WebP
+                    let d=c.toDataURL('image/webp',q);
+                    // 兜底
+                    if(d.length < 100) d = c.toDataURL('image/jpeg', q);
+                    cb(d);
+                }
+            };
+            r.readAsDataURL(f); 
+        }
+
         function showDetail(imgSrc, encodedRemark) { const modal = document.getElementById('imgModal'); const imgEl = document.getElementById('modalImg'); const remarkEl = document.getElementById('modalRemark'); if(imgSrc) { imgEl.src = imgSrc; imgEl.style.display = 'block'; } else { imgEl.style.display = 'none'; } const remark = decodeURIComponent(encodedRemark); if(remark) { remarkEl.innerText = remark; remarkEl.style.display = 'block'; } else { remarkEl.style.display = 'none'; } modal.style.display = 'flex'; }
         function closeModal() { document.getElementById('imgModal').style.display = 'none'; }
         
@@ -1438,14 +1454,12 @@
         function exportDataFile() { 
             if (inventory.length === 0) { alert("空空如也！"); return; } 
             
-            // 获取当前时间字符串
             const now = new Date();
             const timeStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
             
-            // 构建新版数据结构
             const exportData = {
                 meta: {
-                    version: "9.15",
+                    version: "9.16",
                     saveTime: timeStr,
                     description: "我的藏宝箱备份数据"
                 },
@@ -1465,81 +1479,59 @@
             say('click:export'); 
         }
 
-function importDataFile() { 
-    const fileInput = document.getElementById('importFile'); 
-    const file = fileInput.files[0]; 
-    if (!file) { alert("请选择文件！"); return; } 
-    
-    // 提示用户：正在尝试读取
-    console.log("正在读取文件:", file.name, "大小:", file.size);
+        function importDataFile() { 
+            const fileInput = document.getElementById('importFile'); 
+            const file = fileInput.files[0]; 
+            if (!file) { alert("请选择文件！"); return; } 
+            
+            if (!confirm("⚠️ 读取存档将覆盖当前展示的所有物品，确定吗？")) return; 
+            
+            const reader = new FileReader(); 
+            
+            reader.onload = async (e) => { 
+                try { 
+                    const resultStr = e.target.result;
+                    if (!resultStr) throw new Error("文件内容为空");
 
-    if (!confirm("⚠️ 读取存档将覆盖当前展示的所有物品，确定吗？")) return; 
-    
-    const reader = new FileReader(); 
-    
-    reader.onload = (e) => { 
-        try { 
-            const resultStr = e.target.result;
+                    const parsed = JSON.parse(resultStr); 
+                    let loadedData = [];
+                    let loadedTime = "未知时间";
+                    
+                    if (Array.isArray(parsed)) {
+                        loadedData = parsed;
+                        loadedTime = "旧版存档 (未记录)";
+                    } else if (parsed && parsed.data && Array.isArray(parsed.data)) {
+                        loadedData = parsed.data;
+                        if(parsed.meta && parsed.meta.saveTime) loadedTime = parsed.meta.saveTime;
+                    } else {
+                        throw new Error("文件格式错误");
+                    }
+                    
+                    inventory = loadedData; 
+                    await updateDB(); // 等待写入
+                    
+                    lastUpdateTime = loadedTime;
+                    localStorage.setItem(UPDATE_KEY, loadedTime);
+                    updateTimeDisplay();
+                    
+                    const fileTag = document.getElementById('currentFileTag');
+                    if(fileTag) {
+                        fileTag.innerText = "📂 " + file.name;
+                        fileTag.style.display = 'inline-block';
+                        fileTag.title = file.name;
+                    }
+                    
+                    alert(`✅ 读取成功！\n📅 存档日期: ${loadedTime}\n📦 物品数量: ${inventory.length}`); 
+                    say('click:import'); 
+                    
+                } catch (err) { 
+                    console.error("读取错误:", err);
+                    alert("❌ 读取失败：\n" + err.message); 
+                } 
+            }; 
             
-            // 调试：检查读取到的内容是否为空
-            if (!resultStr) {
-                throw new Error("文件内容为空");
-            }
-
-            // 调试：尝试打印前20个字符，检查是不是误选了HTML文件
-            if (resultStr.trim().startsWith("<")) {
-                throw new Error("您似乎选择了HTML网页文件，请选择 .json 结尾的备份文件！");
-            }
-
-            const parsed = JSON.parse(resultStr); 
-            let loadedData = [];
-            let loadedTime = "未知时间";
-            
-            // 逻辑分支：判定格式
-            if (Array.isArray(parsed)) {
-                // 情况A：旧版数组格式
-                loadedData = parsed;
-                loadedTime = "旧版存档 (未记录)";
-            } else if (parsed && parsed.data && Array.isArray(parsed.data)) {
-                // 情况B：新版对象格式
-                loadedData = parsed.data;
-                if(parsed.meta && parsed.meta.saveTime) loadedTime = parsed.meta.saveTime;
-            } else {
-                // 情况C：是JSON但结构不对
-                console.error("解析出的结构:", parsed);
-                throw new Error("文件是JSON，但找不到物品数据数组 (data is not array)");
-            }
-            
-            // 数据覆盖
-            inventory = loadedData; 
-            updateDB(); 
-            
-            // 恢复时间
-            lastUpdateTime = loadedTime;
-            localStorage.setItem(UPDATE_KEY, loadedTime);
-            updateTimeDisplay();
-            
-            // 显示文件名
-            const fileTag = document.getElementById('currentFileTag');
-            if(fileTag) {
-                fileTag.innerText = "📂 " + file.name;
-                fileTag.style.display = 'inline-block';
-                fileTag.title = file.name;
-            }
-            
-            alert(`✅ 读取成功！\n📅 存档日期: ${loadedTime}\n📦 物品数量: ${inventory.length}`); 
-            say('click:import'); 
-            
-        } catch (err) { 
-            console.error("读取错误详情:", err);
-            // 🚨 这里会显示具体的错误原因 🚨
-            alert("❌ 读取失败：\n" + err.message); 
-        } 
-    }; 
-    
-    // 使用 UTF-8 编码读取，防止中文乱码导致解析失败
-    reader.readAsText(file, "UTF-8"); 
-}
+            reader.readAsText(file, "UTF-8"); 
+        }
 
         function openHelpModal() { document.getElementById('helpModal').style.display = 'flex'; }
         function closeHelpModal() { document.getElementById('helpModal').style.display = 'none'; }
@@ -1560,24 +1552,33 @@ function importDataFile() {
         function updateBatchUI() { const b=document.getElementById('btnBatchMode'), p=document.getElementById('batchPanel'); if(isBatchMode){b.classList.add('active');b.innerText='退出批量管理';p.style.display='flex';document.getElementById('selectCount').innerText=0;}else{b.classList.remove('active');b.innerText='✨ 批量管理';p.style.display='none';} }
         function toggleSelect(id) { if(selectedIds.has(id))selectedIds.delete(id); else selectedIds.add(id); document.getElementById('selectCount').innerText=selectedIds.size; renderList(); }
         function selectAll() { const v=inventory.filter(item => { const search = document.getElementById('searchBox').value.toLowerCase(); const matchText = item.name.toLowerCase().includes(search) || item.cat.includes(search); const matchColor = activeColorFilter ? (item.color === activeColorFilter) : true; const matchCat = activeCategoryFilter ? (item.cat === activeCategoryFilter) : true; return matchText && matchColor && matchCat; }); if(selectedIds.size===v.length)selectedIds.clear(); else v.forEach(i=>selectedIds.add(i.id)); document.getElementById('selectCount').innerText=selectedIds.size; renderList(); }
-        function deleteSelected() { if(selectedIds.size===0)return; if(confirm(`确定删除 ${selectedIds.size} 件？`)){ inventory=inventory.filter(i=>!selectedIds.has(i.id)); isBatchMode=false; selectedIds.clear(); updateBatchUI(); updateDB(); recordUpdateTime(); say('click:delete'); } }
+        
+        async function deleteSelected() { 
+            if(selectedIds.size===0)return; 
+            if(confirm(`确定删除 ${selectedIds.size} 件？`)){ 
+                inventory=inventory.filter(i=>!selectedIds.has(i.id)); 
+                isBatchMode=false; selectedIds.clear(); updateBatchUI(); 
+                await updateDB(); 
+                recordUpdateTime(); 
+                say('click:delete'); 
+            } 
+        }
+        
         function renderStats(s) { const b=document.getElementById('statsBoard'); b.innerHTML=''; const t=document.createElement('div'); t.className='stat-card total'; t.onclick=()=>{toggleCategory(null)}; t.innerHTML=`<div class="stat-title">总价值 (重置)</div><div class="stat-val">¥${s['总价值'].toLocaleString()}</div>`; b.appendChild(t); for(let k in s){if(k!=='总价值'&&s[k]>0){const c=document.createElement('div'); c.className=`stat-card ${activeCategoryFilter===k?'active':''}`; c.onclick=()=>{toggleCategory(k)}; c.innerHTML=`<div class="stat-title">${k}</div><div class="stat-val">¥${s[k].toLocaleString()}</div>`; b.appendChild(c);}} }
         function toggleCategory(c) { activeCategoryFilter=activeCategoryFilter===c?null:c; renderList(); }
         function renderFilterBar(cols) { const b=document.getElementById('filterBar'); b.innerHTML='<span style="font-size:13px; color:var(--text-sub); margin-right:8px; flex-shrink:0;">颜色筛选:</span>'; if(activeColorFilter)cols.add(activeColorFilter); cols.forEach(c=>{const d=document.createElement('div');d.className=`filter-dot ${activeColorFilter===c?'active':''}`;d.style.backgroundColor=c;d.onclick=()=>{activeColorFilter=activeColorFilter===c?null:c;renderList();};b.appendChild(d);}); }
-        function delItem(id) { if(confirm("确定删除？")){inventory=inventory.filter(x=>x.id!==id);updateDB();recordUpdateTime();say('click:delete');} }
+        
+        async function delItem(id) { if(confirm("确定删除？")){inventory=inventory.filter(x=>x.id!==id);await updateDB();recordUpdateTime();say('click:delete');} }
         
         function recordUpdateTime() { 
             const n=new Date(), s=`${n.getFullYear()}-${(n.getMonth()+1).toString().padStart(2,'0')}-${n.getDate().toString().padStart(2,'0')} ${n.getHours().toString().padStart(2,'0')}:${n.getMinutes().toString().padStart(2,'0')}`; 
             lastUpdateTime=s; 
             localStorage.setItem(UPDATE_KEY,s); 
             updateTimeDisplay(); 
-            // 只要有修改，隐藏文件名标签，因为状态已经改变
             document.getElementById('currentFileTag').style.display = 'none';
         }
         
         function updateTimeDisplay() { document.getElementById('lastUpdateTime').innerText=lastUpdateTime; }
-        function getStorageUsage() { let t=0; const s=localStorage.getItem(STORAGE_KEY)||""; t+=s.length*2; return t; }
-        function updateStorageInfo() { const b=getStorageUsage(), m=b/(1024*1024), p=(m/5)*100; document.getElementById('storageSize').innerText=m.toFixed(2)+"MB"; document.getElementById('storagePercent').innerText=p.toFixed(1)+"%"; const f=document.getElementById('storageFill'); f.style.width=p+"%"; if(p>90)f.classList.add('danger'); else f.classList.remove('danger'); return m; }
 
         // --- 核心库存增减 (Stock Logic) ---
         function openStockModal(id, type) { 
@@ -1601,7 +1602,7 @@ function importDataFile() {
             const tQty=item.newQty+item.usedQty, tVal=tQty*item.price, nVal=tVal+addTotal, nQty=tQty+addQty; 
             document.getElementById('newAvgPrice').innerText=(nVal/nQty).toFixed(2); 
         }
-        function confirmStockAdd() { 
+        async function confirmStockAdd() { 
             const id=parseInt(document.getElementById('stockId').value), item=inventory.find(x=>x.id===id), addQty=parseInt(document.getElementById('addQty').value), addTotal=parseFloat(document.getElementById('addTotalCost').value), addSize=document.getElementById('addSize').value.trim(); 
             if(!item||isNaN(addQty)||isNaN(addTotal)||addQty<=0)return; 
             const tQty=item.newQty+item.usedQty, tVal=tQty*item.price, nVal=tVal+addTotal, nQty=tQty+addQty; 
@@ -1609,9 +1610,9 @@ function importDataFile() {
             if(batchUnit<item.price)say('cheap'); else if(batchUnit>item.price)say('expensive'); else say('click:save'); 
             if(addSize) { if(!item.sizeNew) item.sizeNew = {}; item.sizeNew[addSize] = (item.sizeNew[addSize] || 0) + addQty; }
             item.price=(nVal/nQty).toFixed(2); item.newQty+=addQty; 
-            updateDB(); recordUpdateTime(); closeStockModal(); 
+            await updateDB(); recordUpdateTime(); closeStockModal(); 
         }
-        function mod(id, type, d) { 
+        async function mod(id, type, d) { 
             if (d > 0 && type === 'new') { openStockModal(id, 'new'); return; }
             const item = inventory.find(x => x.id === id);
             if (item) {
@@ -1629,39 +1630,30 @@ function importDataFile() {
                     }
                 }
                 item[type==='new'?'newQty':'usedQty'] = Math.max(0, item[type==='new'?'newQty':'usedQty'] + d);
-                updateDB(); recordUpdateTime();
+                await updateDB(); recordUpdateTime();
             }
         }
 
         /* =========================================
-           4. 看板娘逻辑核心
+           4. 看板娘逻辑核心 (保留基本功能)
         ========================================= */
         function initWaifuInteractions() { 
-            // 鼠标追踪
             document.addEventListener('mousemove', (e)=>{ 
                 const c=document.getElementById('live2dcanvas'); 
                 if(!c||c.style.display==='none')return; 
                 const r=c.getBoundingClientRect(), d=Math.sqrt(Math.pow(e.clientX-(r.left+r.width/2),2)+Math.pow(e.clientY-(r.top+r.height/2),2)); 
                 if(d<300&&!document.getElementById('waifuTips').classList.contains('active')&&Math.random()<0.005) say('hover'); 
             }); 
-            // 交互反馈
             document.getElementById('newCat').addEventListener('change', function(){say(`click:newCat:${this.value}`)}); 
             document.getElementById('newColor').addEventListener('change', function(){say('click:newColor')}); 
         }
 
-        // 节日检测函数
         function checkHoliday() {
             const date = new Date();
             const m = date.getMonth() + 1;
             const d = date.getDate();
             if (m === 1 && d === 1) return "holiday:newyear";
             if (m === 2 && d === 14) return "holiday:valentine";
-            if (m === 3 && d === 8) return "holiday:women";
-            if (m === 5 && d === 1) return "holiday:labor";
-            if (m === 6 && d === 1) return "holiday:children";
-            if (m === 10 && d === 1) return "holiday:national";
-            if (m === 11 && d === 11) return "holiday:singles";
-            if (m === 12 && d === 25) return "holiday:christmas";
             return null;
         }
 
@@ -1677,18 +1669,19 @@ function importDataFile() {
         }
 
         function say(key) { 
-            const p = waifuQuotes[currentPersona] || waifuQuotes['normal']; 
+            // 简单的兜底逻辑，防止因为台词库空了报错
+            if (!waifuQuotes[currentPersona]) return;
+            
+            const p = waifuQuotes[currentPersona]; 
             let l = null; 
             if(key === 'welcome'){ 
                 const c = getWelcomeContext(); 
-                l = p[c] || waifuQuotes['normal'][c] || p['welcome'] || waifuQuotes['normal']['welcome']; 
+                l = p[c] || p['welcome']; 
             } else { 
                 l = p[key]; 
                 if(!l && key.includes(':')) l = p[key.split(':').slice(0,2).join(':')]; 
-                if(!l && key.startsWith('click:newCat')) l = p["click:newCat:其他"] || p["click:save"]; 
-                if(!l) l = waifuQuotes['normal'][key];
             } 
-            if(!l) return; 
+            if(!l || l.length === 0) return; 
             showWaifuText(l[Math.floor(Math.random()*l.length)]); 
         }
 
@@ -1742,46 +1735,16 @@ function importDataFile() {
                 tips.style.right='auto'; 
             } 
         }
-function initWaifuDrag() { 
+        function initWaifuDrag() { 
             const c=document.getElementById('live2dcanvas'); 
             if(!c)return; 
             let isD=false,sX,sY,iL,iT; 
             const r=c.getBoundingClientRect(); 
             c.style.bottom='auto'; c.style.right='auto'; c.style.left=r.left+'px'; c.style.top=r.top+'px'; c.style.position='fixed'; 
             updateTipsPosition(c); 
-            
-            // --- 鼠标事件 (保留给PC端) ---
             c.addEventListener('mousedown',(e)=>{isD=true;sX=e.clientX;sY=e.clientY;const cr=c.getBoundingClientRect();iL=cr.left;iT=cr.top;c.style.cursor='grabbing';say('drag');}); 
             document.addEventListener('mousemove',(e)=>{if(isD){const dx=e.clientX-sX,dy=e.clientY-sY;c.style.left=(iL+dx)+'px';c.style.top=(iT+dy)+'px';updateTipsPosition(c);}}); 
-            document.addEventListener('mouseup',()=>{isD=false;c.style.cursor='grab';});
-
-            // --- 触摸事件 (优化IOS/Android端) ---
-            c.addEventListener('touchstart', (e) => {
-                isD = true;
-                // 获取第一根手指的坐标
-                sX = e.touches[0].clientX;
-                sY = e.touches[0].clientY;
-                const cr = c.getBoundingClientRect();
-                iL = cr.left;
-                iT = cr.top;
-                say('drag');
-            }, { passive: false }); // passive: false 允许我们调用 preventDefault
-
-            document.addEventListener('touchmove', (e) => {
-                if (isD) {
-                    // 阻止屏幕跟随手指滚动
-                    e.preventDefault(); 
-                    const dx = e.touches[0].clientX - sX;
-                    const dy = e.touches[0].clientY - sY;
-                    c.style.left = (iL + dx) + 'px';
-                    c.style.top = (iT + dy) + 'px';
-                    updateTipsPosition(c);
-                }
-            }, { passive: false });
-
-            document.addEventListener('touchend', () => {
-                isD = false;
-            });
+            document.addEventListener('mouseup',()=>{isD=false;c.style.cursor='grab';}); 
         }
         function initTheme() { const t=localStorage.getItem(THEME_KEY)||'passion'; setTheme(t); }
         function setTheme(id) { 
@@ -1791,28 +1754,20 @@ function initWaifuDrag() {
             const m={'passion':'passion','night':'night','jirai':'mesugaki','men':'men','gacha':'gacha','ladies':'ladies','wood':'normal'}; 
             const tp=m[id]||'normal'; 
             currentPersona=waifuQuotes[tp]?tp:'normal'; 
-            const n={passion:'热烈',ladies:'优雅',men:'绅士',gacha:'欧皇',daily:'日常',night:'深夜',wood:'复古',jirai:'地雷'}; 
-            showWaifuText(`切换到${n[id]}风格...`); 
+            showWaifuText(`切换到${themes.find(x=>x.id===id).name}风格...`); 
         }
         function renderThemeButtons(id) { const c=document.getElementById('themeGroup'); c.innerHTML=''; themes.forEach(t=>{ const b=document.createElement('div'); b.className=`theme-btn ${id===t.id?'active':''}`; b.innerText=t.icon; b.title=t.name; b.onclick=()=>setTheme(t.id); c.appendChild(b); }); }
     	
-			/* =========================================
-           新增：密码锁定逻辑
-        ========================================= */
-        
-        // ⚠️ 在这里设置你的密码 (默认为 123456)
+        // --- 密码锁定逻辑 ---
         const MY_PASSWORD = "123mzynt"; 
 
-        // 绑定回车键：在输入框按回车直接解锁
         document.getElementById('passInput').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 checkPassword();
             }
         });
 
-        // 页面加载时让输入框自动获得焦点
         window.addEventListener('load', function() {
-            // 延迟一点点确保元素渲染
             setTimeout(() => {
                 const input = document.getElementById('passInput');
                 if(input) input.focus();
@@ -1825,14 +1780,8 @@ function initWaifuDrag() {
             const val = input.value;
 
             if (val === MY_PASSWORD) {
-                // 1. 密码正确，添加解锁类（向上滑动动画）
                 document.getElementById('lockScreen').classList.add('unlocked');
-                
-                // 2. 隐藏错误提示
                 msg.innerText = "";
-                
-                // 3. (可选) 让看板娘说句欢迎词
-                // 延时 500ms 等动画做完再说，避免卡顿
                 setTimeout(() => {
                     if (typeof say === 'function') {
                         say('welcome');
@@ -1840,26 +1789,13 @@ function initWaifuDrag() {
                 }, 500);
 
             } else {
-                // 密码错误
                 msg.innerText = "❌ 密码错误，禁止访问！";
-                input.value = ""; // 清空输入框
-                input.focus();    // 重新聚焦
-                
-                // 错误时抖动一下输入框
+                input.value = ""; 
+                input.focus();    
                 input.style.borderColor = "#d32f2f";
                 setTimeout(() => input.style.borderColor = "var(--border)", 500);
             }
         }
-	
 	</script>
-	<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then(reg => console.log('✅ Service Worker 注册成功:', reg.scope))
-        .catch(err => console.log('❌ Service Worker 注册失败:', err));
-    });
-  }
-</script>
 </body>
 </html>
