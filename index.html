@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>我的藏宝箱 V9.2 </title>
+    <title>我的藏宝箱 V9.2.1 </title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -1233,98 +1233,92 @@
         }
 
 function renderList() {
-            const listEl = document.getElementById('itemList');
-            // --- 修改点 A：获取输入并按空格切割成关键词数组 ---
-            const searchRaw = document.getElementById('searchBox').value.toLowerCase().trim();
-            // 如果输入为空，关键词数组就是空；如果不为空，按空格(一个或多个)分割
-            const keywords = searchRaw ? searchRaw.split(/\s+/) : []; 
-            // ------------------------------------------------
+    const listEl = document.getElementById('itemList');
+    const searchRaw = document.getElementById('searchBox').value.toLowerCase().trim();
+    const keywords = searchRaw ? searchRaw.split(/\s+/) : []; 
+    const sortType = document.getElementById('sortSelect').value;
+    
+    listEl.className = `masonry-grid ${currentView === 'list' ? 'view-list' : ''}`;
+    listEl.innerHTML = '';
+    
+    let stats = { '总价值': 0 }; 
+    let visibleColors = new Set();
+    let filteredItems = inventory.filter(item => {
 
-            const sortType = document.getElementById('sortSelect').value;
-            
-            listEl.className = `masonry-grid ${currentView === 'list' ? 'view-list' : ''}`;
-            listEl.innerHTML = '';
-            
-            let stats = { '总价值': 0 }; 
-            let visibleColors = new Set();
-            
-            let filteredItems = inventory.filter(item => {
-                // --- 修改点 B：电商式多关键词匹配逻辑 ---
-                // 1. 把这个物品所有相关的文字拼成一个大字符串 (名称 + 分类 + 备注)
-                const itemFullText = (item.name + " " + item.cat + " " + (item.remark || "")).toLowerCase();
-                
-                // 2. 检查：是不是“每一个”关键词都在这个大字符串里？
-                // (如果关键词数组是空的，说明没输内容，默认算匹配成功)
-                const matchText = keywords.length === 0 ? true : keywords.every(k => itemFullText.includes(k));
-                // --------------------------------------
+        const sizeStr = item.sizeNew ? Object.keys(item.sizeNew).join(" ") : "";
 
-                const matchColor = activeColorFilter ? (item.color === activeColorFilter) : true;
-                const matchCat = activeCategoryFilter ? (item.cat === activeCategoryFilter) : true;
-                
-                // 只有 文字匹配 AND 颜色匹配 AND 分类匹配 都满足，才保留
-                return matchText && matchColor && matchCat;
-            });
+        const itemFullText = (item.name + " " + sizeStr).toLowerCase();
+        
+        const matchText = keywords.length === 0 ? true : keywords.every(k => itemFullText.includes(k));
 
-            filteredItems.sort((a, b) => {
-                if (sortType === 'dateAsc') return a.id - b.id;
-                if (sortType === 'priceDesc') return b.price - a.price;
-                if (sortType === 'priceAsc') return a.price - b.price;
-                if (sortType === 'nameAsc') return a.name.localeCompare(b.name);
-                return b.id - a.id;
-            });
+        const matchColor = activeColorFilter ? (item.color === activeColorFilter) : true;
+        const matchCat = activeCategoryFilter ? (item.cat === activeCategoryFilter) : true;
+        
+        return matchText && matchColor && matchCat;
+    });
 
-            filteredItems.forEach(item => {
-                const val = (item.newQty + item.usedQty) * item.price;
-                stats['总价值'] += val;
-                if(!stats[item.cat]) stats[item.cat] = 0; 
-                stats[item.cat] += val;
-                visibleColors.add(item.color);
 
-                const totalQty = item.newQty + item.usedQty;
-                const card = document.createElement('div'); 
-                const isSelected = selectedIds.has(item.id);
-                card.className = `polaroid-card ${isSelected ? 'is-selected' : ''}`;
-                
-                const imgHtml = item.img ? `<img src="${item.img}" class="card-img">` : `<div class="no-img-label">${item.cat}</div>`;
-                const safeRemark = item.remark ? encodeURIComponent(item.remark).replace(/'/g, "%27") : "";
-                
-                let clickAction = isBatchMode 
-                    ? `onclick="toggleSelect(${item.id})"` 
-                    : `onclick="showDetail('${item.img || ''}', '${safeRemark}')"`;
-                
-                let sizeTagsHtml = '';
-                if (item.sizeNew && Object.keys(item.sizeNew).length > 0) {
-                    sizeTagsHtml = '<div class="size-tags-container">';
-                    for (let s in item.sizeNew) {
-                        if(item.sizeNew[s] > 0) sizeTagsHtml += `<span class="size-tag">${s} <b>x${item.sizeNew[s]}</b></span>`;
-                    }
-                    sizeTagsHtml += '</div>';
-                }
+    filteredItems.sort((a, b) => {
+        if (sortType === 'dateAsc') return a.id - b.id;
+        if (sortType === 'priceDesc') return b.price - a.price;
+        if (sortType === 'priceAsc') return a.price - b.price;
+        if (sortType === 'nameAsc') return a.name.localeCompare(b.name);
+        return b.id - a.id;
+    });
 
-                let actionBtns = isBatchMode ? "" : `
-                    <button class="btn-del" onclick="delItem(${item.id})" title="删除">🗑️</button>
-                    <button class="btn-edit" onclick="openEditModal(${item.id})" title="编辑">✏️</button>
-                    <button class="btn-copy" onclick="copyToInput(${item.id})" title="复制到录入">📋</button>
-                    <div class="stock-row"><span class="stock-label">📦 全新</span><div class="stock-ctrl"><div class="btn-mini" onclick="mod(${item.id}, 'new', -1)">-</div><span class="big-num num-new">${item.newQty}</span><div class="btn-mini" onclick="mod(${item.id}, 'new', 1)">+</div></div></div>
-                    ${sizeTagsHtml}
-                    <div class="stock-row"><span class="stock-label">⚡ 在用</span><div class="stock-ctrl"><div class="btn-mini" onclick="mod(${item.id}, 'used', -1)">-</div><span class="big-num num-used">${item.usedQty}</span><div class="btn-mini" onclick="mod(${item.id}, 'used', 1)">+</div></div></div>
-                `;
+    filteredItems.forEach(item => {
+        const val = (item.newQty + item.usedQty) * item.price;
+        stats['总价值'] += val;
+        if(!stats[item.cat]) stats[item.cat] = 0; 
+        stats[item.cat] += val;
+        visibleColors.add(item.color);
 
-                card.innerHTML = `
-                    <div class="card-img-area" ${clickAction}>
-                        ${imgHtml}
-                        <span class="total-badge">${totalQty}</span>
-                    </div>
-                    <div class="card-info">
-                        <div class="card-header"><div class="card-title">${item.name}</div><div class="color-badge" style="background:${item.color}"></div></div>
-                        <div class="card-meta"><span>${item.cat}</span><span class="price-tag">¥${item.price}</span></div>
-                        ${actionBtns}
-                    </div>`;
-                listEl.appendChild(card);
-            });
-            renderStats(stats); 
-            renderFilterBar(visibleColors);
+        const totalQty = item.newQty + item.usedQty;
+        const card = document.createElement('div'); 
+        const isSelected = selectedIds.has(item.id);
+        card.className = `polaroid-card ${isSelected ? 'is-selected' : ''}`;
+        
+        const imgHtml = item.img ? `<img src="${item.img}" class="card-img">` : `<div class="no-img-label">${item.cat}</div>`;
+        const safeRemark = item.remark ? encodeURIComponent(item.remark).replace(/'/g, "%27") : "";
+        
+        let clickAction = isBatchMode 
+            ? `onclick="toggleSelect(${item.id})"` 
+            : `onclick="showDetail('${item.img || ''}', '${safeRemark}')"`;
+        
+
+        let sizeTagsHtml = '';
+        if (item.sizeNew && Object.keys(item.sizeNew).length > 0) {
+            sizeTagsHtml = '<div class="size-tags-container">';
+            for (let s in item.sizeNew) {
+                if(item.sizeNew[s] > 0) sizeTagsHtml += `<span class="size-tag">${s} <b>x${item.sizeNew[s]}</b></span>`;
+            }
+            sizeTagsHtml += '</div>';
         }
+
+        let actionBtns = isBatchMode ? "" : `
+            <button class="btn-del" onclick="delItem(${item.id})" title="删除">🗑️</button>
+            <button class="btn-edit" onclick="openEditModal(${item.id})" title="编辑">✏️</button>
+            <button class="btn-copy" onclick="copyToInput(${item.id})" title="复制到录入">📋</button>
+            <div class="stock-row"><span class="stock-label">📦 全新</span><div class="stock-ctrl"><div class="btn-mini" onclick="mod(${item.id}, 'new', -1)">-</div><span class="big-num num-new">${item.newQty}</span><div class="btn-mini" onclick="mod(${item.id}, 'new', 1)">+</div></div></div>
+            ${sizeTagsHtml}
+            <div class="stock-row"><span class="stock-label">⚡ 在用</span><div class="stock-ctrl"><div class="btn-mini" onclick="mod(${item.id}, 'used', -1)">-</div><span class="big-num num-used">${item.usedQty}</span><div class="btn-mini" onclick="mod(${item.id}, 'used', 1)">+</div></div></div>
+        `;
+
+        card.innerHTML = `
+            <div class="card-img-area" ${clickAction}>
+                ${imgHtml}
+                <span class="total-badge">${totalQty}</span>
+            </div>
+            <div class="card-info">
+                <div class="card-header"><div class="card-title">${item.name}</div><div class="color-badge" style="background:${item.color}"></div></div>
+                <div class="card-meta"><span>${item.cat}</span><span class="price-tag">¥${item.price}</span></div>
+                ${actionBtns}
+            </div>`;
+        listEl.appendChild(card);
+    });
+    renderStats(stats); 
+    renderFilterBar(visibleColors);
+}
 
         // --- 辅助功能 ---
         function toggleViewMode() { currentView = currentView === 'grid' ? 'list' : 'grid'; document.getElementById('viewIcon').innerText = currentView === 'grid' ? '🖼️' : '📝'; renderList(); say('click:toggleView'); }
@@ -1850,5 +1844,6 @@ function initWaifuDrag() {
 	</script>
 </body>
 </html>
+
 
 
