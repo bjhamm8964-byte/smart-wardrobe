@@ -1,14 +1,21 @@
 {
   "name": "我的藏宝箱",
   "short_name": "藏宝箱",
-  "start_url": "./index.html",
+  "start_url": "/smart-wardrobe/",     
+  "scope": "/smart-wardrobe/",
   "display": "standalone",
   "background_color": "#1e1e1e",
   "theme_color": "#1e1e1e",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/1063/1063376.png",
+      "src": "/smart-wardrobe/icon.png",           
       "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/smart-wardrobe/icon.png",
+      "sizes": "192x192",
       "type": "image/png"
     }
   ]
