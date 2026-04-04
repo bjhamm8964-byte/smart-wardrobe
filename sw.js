@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wardrobe-cache-v10';  // 升版本
+const CACHE_NAME = 'wardrobe-cache-v11';  // 升版本
 
 const ASSETS_TO_CACHE = [
   './',
