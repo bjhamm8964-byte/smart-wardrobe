@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>我的藏宝箱 V9.2.2 </title>
+    <title>我的藏宝箱 V9.2.4 </title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -1843,21 +1843,17 @@ function initWaifuDrag() {
         }
 	</script>
 	<script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            // 注意路径：这里假设 sw.js 和 index.html 在同一级目录
-            navigator.serviceWorker.register('./sw.js')
-                .then(registration => {
-                    console.log('✅ Service Worker 注册成功，作用域:', registration.scope);
-                })
-                .catch(error => {
-                    console.log('❌ Service Worker 注册失败:', error);
-                });
-        });
-    }
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js', { scope: '/smart-wardrobe/' })
+        .then(reg => console.log('✅ SW 注册成功', reg.scope))
+        .catch(err => console.error('❌ SW 注册失败', err));
+    });
+  }
 </script>
 </body>
 </html>
+
 
 
 
