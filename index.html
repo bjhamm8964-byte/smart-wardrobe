@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>我的藏宝箱 V9.2.4 </title>
+    <title>我的藏宝箱 V9.2.5 </title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -388,9 +388,10 @@
             <div class="data-tools">
                 <div style="font-size:13px; margin-bottom:8px; font-weight:bold;">💾 数据备份 (文件)</div>
                 <input type="file" id="importFile" accept=".json" style="width:100%; margin-bottom:10px; font-size:12px; color:var(--text-sub);">
-                <div class="btn-group">
-                    <button class="btn-sub" onclick="exportDataFile()">📤 下载备份.json</button>
-                    <button class="btn-sub" onclick="importDataFile()">📥 读取备份文件</button>
+                <div class="btn-group" style="display: flex; gap: 5px; flex-wrap: wrap;">
+                    <button class="btn-sub" onclick="exportDataFile()" style="flex: 1;">📤 下载备份.json</button>
+                    <button class="btn-sub" onclick="importDataFile()" style="flex: 1;">📥 读取备份文件</button>
+                    <button class="btn-sub" onclick="importQuotesFile()" style="flex: 1; min-width: 100%; margin-top: 5px; background: rgba(197, 160, 89, 0.1); color: var(--accent); border: 1px dashed var(--accent);">🎭 注入外部台词包</button>
                 </div>
             </div>
             
@@ -567,6 +568,7 @@
         const THEME_KEY = 'wardrobe_theme';
         const UPDATE_KEY = 'wardrobe_last_update'; 
         const WAIFU_KEY = 'wardrobe_waifu_visible';
+        const QUOTES_KEY = 'wardrobe_custom_quotes';
         
         // 注意：localForage 使用 IndexedDB，无需计算容量限制，但为了代码健壮性保留变量
         const MAX_STORAGE_MB = 99999; 
@@ -594,10 +596,9 @@
         ];
 
         /* =========================================
-           2. AI 台词库 (已清空)
-           在此处填入你的台词数据
+           2. AI 台词库
         ========================================= */
-        const waifuQuotes = {
+        let waifuQuotes = {
 "normal": {
     "welcome:morning": [
       "早安呀，主人！太阳都起床啦，今天也要元气满满出发哦～✨",
@@ -1169,6 +1170,13 @@
             try {
                 const data = await localforage.getItem(STORAGE_KEY);
                 inventory = data || []; 
+                
+                // 【新增逻辑】初始化读取外部台词
+                const customQuotes = await localforage.getItem(QUOTES_KEY);
+                if (customQuotes) {
+                    // 采用合并策略：保留原有的基础分类，外部词库覆盖同名分类
+                    waifuQuotes = Object.assign({}, waifuQuotes, customQuotes);
+                }
             } catch(err) {
                 console.error("读取失败", err);
                 inventory = [];
@@ -1193,7 +1201,6 @@
             try {
                 await localforage.setItem(STORAGE_KEY, inventory);
                 renderList(); 
-                // recordUpdateTime(); // 更新时间通常在操作时单独记录
             } catch (err) {
                 alert("❌ 保存失败：" + err);
                 console.error(err);
@@ -1522,6 +1529,57 @@ function renderList() {
             }; 
             
             reader.readAsText(file, "UTF-8"); 
+        }
+
+        // --- 看板娘台词导入功能 ---
+        function importQuotesFile() {
+            const fileInput = document.getElementById('importFile');
+            const file = fileInput.files[0];
+            if (!file) { alert("请先在上方选择一个台词包 .json 文件！"); return; }
+
+            const reader = new FileReader();
+
+            reader.onload = async (e) => {
+                try {
+                    const resultStr = e.target.result;
+                    if (!resultStr) throw new Error("文件内容为空");
+
+                    const parsedQuotes = JSON.parse(resultStr);
+
+                    // 防呆校验：判断它是不是误传了物品备份文件（通过你定义的 meta 字段）
+                    if (parsedQuotes.meta && parsedQuotes.meta.version) {
+                        throw new Error("格式错误：这是物品数据备份，请在上方点击【读取备份文件】！");
+                    }
+
+                    // 合并数据并存入数据库
+                    waifuQuotes = Object.assign({}, waifuQuotes, parsedQuotes);
+                    await localforage.setItem(QUOTES_KEY, waifuQuotes);
+
+                    // ==========================================
+                    // 游玩体感 (Juiciness) 反馈循环：
+                    // 1. 弹出系统提示
+                    alert("🎭 台词包注入成功！看板娘已获得新的性格与记忆！");
+                    
+                    // 2. 视觉与角色反馈：立刻让看板娘开口说话
+                    if (typeof showWaifuText === 'function') {
+                        showWaifuText("哇！我的脑海里多出了好多有趣的记忆！");
+                        // 2.5秒后尝试用新的台词库打招呼
+                        setTimeout(() => {
+                            say('welcome'); 
+                        }, 2500);
+                    }
+                    // ==========================================
+
+                    // 清理现场
+                    fileInput.value = ""; 
+
+                } catch (err) {
+                    console.error("读取台词错误:", err);
+                    alert("❌ 台词导入失败：\n" + err.message);
+                }
+            };
+
+            reader.readAsText(file, "UTF-8");
         }
 
         function openHelpModal() { document.getElementById('helpModal').style.display = 'flex'; }
@@ -1853,7 +1911,3 @@ function initWaifuDrag() {
 </script>
 </body>
 </html>
-
-
-
-
