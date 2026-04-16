@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>我的藏宝箱 V9.3 </title>
+    <title>我的藏宝箱 V9.3.1 </title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -1162,7 +1162,6 @@
   }
         };
 
-        // --- 初始化流程 (异步改造) ---
         window.onload = async function() {
             // 1. 初始化 localForage
             localforage.config({ name: 'MyTreasureBox' });
@@ -1172,10 +1171,8 @@
                 const data = await localforage.getItem(STORAGE_KEY);
                 inventory = data || []; 
                 
-                // 【新增逻辑】初始化读取外部台词
                 const customQuotes = await localforage.getItem(QUOTES_KEY);
                 if (customQuotes) {
-                    // 采用合并策略：保留原有的基础分类，外部词库覆盖同名分类
                     waifuQuotes = Object.assign({}, waifuQuotes, customQuotes);
                 }
             } catch(err) {
@@ -1191,6 +1188,7 @@
             initPCScroll();       
             initWaifu();          
             initWaifuInteractions();
+			initColorBarScroll();
         };
 
         /* =========================================
@@ -1962,6 +1960,46 @@ function initWaifuDrag() {
                 setTimeout(() => input.style.borderColor = "var(--border)", 500);
             }
         }
+
+		// 1. 核心逻辑：PC端颜色条拖拽滑动功能
+function initColorBarScroll() {
+    const slider = document.getElementById('filterBar');
+    if (!slider) return;
+
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+
+    // 初始状态给予“可抓取”的视觉暗示
+    slider.style.cursor = 'grab';
+
+    slider.addEventListener('mousedown', (e) => {
+        isDown = true;
+        slider.style.cursor = 'grabbing'; // 爽点设计：按下瞬间给予物理反馈暗示
+        slider.style.userSelect = 'none'; // 防止拖拽时误选中文本
+        startX = e.pageX - slider.offsetLeft;
+        scrollLeft = slider.scrollLeft;
+    });
+
+    slider.addEventListener('mouseleave', () => {
+        isDown = false;
+        slider.style.cursor = 'grab';
+    });
+
+    slider.addEventListener('mouseup', () => {
+        isDown = false;
+        slider.style.cursor = 'grab';
+    });
+
+    slider.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - slider.offsetLeft;
+        const walk = (x - startX) * 1.5; // 阻尼系数调整：1.5倍速让拖拽更跟手
+        slider.scrollLeft = scrollLeft - walk;
+    });
+}
+
 	</script>
 	<script>
   if ('serviceWorker' in navigator) {
