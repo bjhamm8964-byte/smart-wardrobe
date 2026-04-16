@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>我的藏宝箱 V9.2.5 </title>
+    <title>我的藏宝箱 V9.3 </title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -385,15 +385,16 @@
                 <button class="btn-main" onclick="addItem()">保存入库</button>
             </div>
 
-            <div class="data-tools">
-                <div style="font-size:13px; margin-bottom:8px; font-weight:bold;">💾 数据备份 (文件)</div>
-                <input type="file" id="importFile" accept=".json" style="width:100%; margin-bottom:10px; font-size:12px; color:var(--text-sub);">
-                <div class="btn-group" style="display: flex; gap: 5px; flex-wrap: wrap;">
-                    <button class="btn-sub" onclick="exportDataFile()" style="flex: 1;">📤 下载备份.json</button>
-                    <button class="btn-sub" onclick="importDataFile()" style="flex: 1;">📥 读取备份文件</button>
-                    <button class="btn-sub" onclick="importQuotesFile()" style="flex: 1; min-width: 100%; margin-top: 5px; background: rgba(197, 160, 89, 0.1); color: var(--accent); border: 1px dashed var(--accent);">🎭 注入外部台词包</button>
-                </div>
-            </div>
+<div class="data-tools">
+    <div style="font-size:13px; margin-bottom:8px; font-weight:bold;">💾 数据备份 (文件)</div>
+    <input type="file" id="importFile" accept=".json" style="width:100%; margin-bottom:10px; font-size:12px; color:var(--text-sub);">
+    <div class="btn-group" style="display: flex; gap: 5px; flex-wrap: wrap;">
+        <button class="btn-sub" onclick="exportDataFile()" style="flex: 1;">📤 下载备份.json</button>
+        <button class="btn-sub" onclick="importDataFile()" style="flex: 1;" title="会清空当前数据">📥 覆盖读取</button>
+        <button class="btn-sub" onclick="mergeDataFile()" style="flex: 1; background: rgba(46, 125, 50, 0.2); color: #2e7d32; border: 1px solid #2e7d32;">🔗 追加合并</button>
+        <button class="btn-sub" onclick="importQuotesFile()" style="flex: 1; min-width: 100%; margin-top: 5px; background: rgba(197, 160, 89, 0.1); color: var(--accent); border: 1px dashed var(--accent);">🎭 注入外部台词包</button>
+    </div>
+</div>
             
             <div class="theme-switcher-area">
                 <div class="theme-title">🎨 界面风格</div>
@@ -1530,6 +1531,68 @@ function renderList() {
             
             reader.readAsText(file, "UTF-8"); 
         }
+
+		// --- 追加合并数据包功能 ---
+function mergeDataFile() {
+    const fileInput = document.getElementById('importFile');
+    const file = fileInput.files[0];
+    if (!file) { alert("请先选择要合并的备份文件！"); return; }
+
+    const reader = new FileReader();
+
+    reader.onload = async (e) => {
+        try {
+            const resultStr = e.target.result;
+            if (!resultStr) throw new Error("文件内容为空");
+
+            const parsed = JSON.parse(resultStr);
+            let loadedData = [];
+            
+            // 兼容旧版纯数组或新版带有 meta 的对象
+            if (Array.isArray(parsed)) {
+                loadedData = parsed;
+            } else if (parsed && parsed.data && Array.isArray(parsed.data)) {
+                loadedData = parsed.data;
+            } else {
+                throw new Error("无法识别的备份文件格式");
+            }
+
+            // 利用 Map 根据 ID 进行合并与去重
+            const inventoryMap = new Map(inventory.map(item => [item.id, item]));
+            let addedCount = 0;
+
+            loadedData.forEach(newItem => {
+                if (!inventoryMap.has(newItem.id)) {
+                    inventoryMap.set(newItem.id, newItem);
+                    addedCount++;
+                }
+            });
+
+            // 转换回数组并按时间倒序排列（最新的在最前）
+            inventory = Array.from(inventoryMap.values());
+            inventory.sort((a, b) => b.id - a.id);
+
+            // 执行写入并更新视图
+            await updateDB();
+            recordUpdateTime();
+            
+            // 重置输入框
+            fileInput.value = ""; 
+
+            // 玩家反馈：清晰告知新增量与总库存
+            alert(`✅ 合并成功！\n📦 本次新增独立物品: ${addedCount} 件\n📊 当前库存总计: ${inventory.length} 件`);
+            
+            // 触发看板娘视觉/语音反馈
+            if (typeof say === 'function') say('click:import');
+
+        } catch (err) {
+            console.error("合并错误:", err);
+            alert("❌ 合并失败：\n" + err.message);
+        }
+    };
+
+    reader.readAsText(file, "UTF-8");
+}
 
         // --- 看板娘台词导入功能 ---
         function importQuotesFile() {
