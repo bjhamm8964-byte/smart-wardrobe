@@ -1,10 +1,12 @@
-const CACHE_NAME = 'wardrobe-cache-v13';  // 升版本
+const CACHE_NAME = 'wardrobe-cache-v20';  // 储物间折叠动画
 
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
   './icon.png',
+  './storage-room.css?v=9.6.3',
+  './storage-room.js?v=9.6.3',
   './sw.js',
   'https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js',
   'https://unpkg.com/live2d-widget@3.1.4/lib/L2Dwidget.min.js'
@@ -14,7 +16,10 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('📦 [SW] 缓存核心文件...');
-      return cache.addAll(ASSETS_TO_CACHE).catch(err => console.warn('部分资源预缓存失败', err));
+      return Promise.allSettled(ASSETS_TO_CACHE.map((asset) => cache.add(asset))).then((results) => {
+        const failed = results.filter((result) => result.status === 'rejected');
+        if (failed.length) console.warn(`有 ${failed.length} 个资源预缓存失败，其他核心文件仍可离线使用`);
+      });
     })
   );
   self.skipWaiting();

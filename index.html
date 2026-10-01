@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>我的藏宝箱 V9.3.1 </title>
+    <title>我的藏宝箱 V9.6.3</title>
     <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="./storage-room.css?v=9.6.3">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="./icon.png">
@@ -115,14 +116,66 @@
         [data-theme="wood"] { --bg-body: #e8dcc5; --bg-panel: #fdfbf7; --text-main: #5d4037; --text-sub: #8d6e63; --border: #a1887f; --accent: #d4a017; --btn-bg: #6d4c41; --btn-text: #fff; --highlight-bg: #fff8e1; --shadow: rgba(93, 64, 55, 0.1); --scroll-btn-bg: rgba(253, 251, 247, 0.9); --progress-bg: #d7ccc8; --progress-fill: #8d6e63; --badge-bg: rgba(0, 0, 0, 0.3); --select-overlay: rgba(212, 160, 23, 0.1); --select-border: #d4a017;}
         [data-theme="jirai"] { --bg-body: #fff0f5; --bg-panel: #ffffff; --text-main: #000000; --text-sub: #666666; --border: #000000; --accent: #ff007f; --btn-bg: #000000; --btn-text: #ff007f; --highlight-bg: #fff5fa; --shadow: rgba(255, 0, 127, 0.2); --scroll-btn-bg: rgba(255, 255, 255, 0.9); --progress-bg: #e0e0e0; --progress-fill: #ff007f; --badge-text: #fff; --badge-bg: rgba(0, 0, 0, 0.8); --select-overlay: rgba(255, 0, 127, 0.1); --select-border: #ff007f; }
 
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 10px; background-color: var(--bg-body); color: var(--text-main); background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 20px 20px; transition: background 0.3s ease, color 0.3s ease; -webkit-text-size-adjust: 100%; }
-        .main-wrapper { display: block; padding-bottom: 50px;}
+        *, *::before, *::after { box-sizing: border-box; }
+        html { width: 100%; max-width: 100%; overflow-x: hidden; }
+        body { width: 100%; max-width: 100%; min-height: 100dvh; overflow-x: hidden; overscroll-behavior-x: none; font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 10px; background-color: var(--bg-body); color: var(--text-main); background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 20px 20px; transition: background 0.3s ease, color 0.3s ease; -webkit-text-size-adjust: 100%; }
+        .main-wrapper { display: flex; flex-direction: column; width: 100%; max-width: 100%; padding-bottom: 50px; }
+        .layout-sidebar { width: 100%; max-width: 100%; min-width: 0; max-height: 10000px; overflow-x: hidden; overscroll-behavior-x: none; transition: max-height 0.45s ease, opacity 0.3s ease, transform 0.45s ease; }
+        .layout-content { width: 100%; max-width: 100%; min-width: 0; }
+        .layout-toggle {
+            position: fixed;
+            left: 50%;
+            bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+            width: 78px;
+            height: 32px;
+            margin: 0;
+            padding: 0;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: var(--bg-panel);
+            color: var(--accent);
+            box-shadow: 0 3px 10px var(--shadow);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            line-height: 1;
+            z-index: 40;
+            transform: translateX(-50%);
+            transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+        }
+        .layout-toggle:hover { background: var(--highlight-bg); transform: translateX(-50%) scale(1.04); }
+        .layout-toggle:active { transform: translateX(-50%) scale(0.96); }
+        .sr-only { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
+        .layout-toggle-icon::before { content: '↑'; }
+        .layout-toggle-text::before { content: '收起'; }
+        .main-wrapper.tools-collapsed .layout-sidebar { max-height: 0; opacity: 0; transform: translateY(-24px); pointer-events: none; }
+        .main-wrapper.tools-collapsed .layout-toggle-icon::before { content: '↓'; }
+        .main-wrapper.tools-collapsed .layout-toggle-text::before { content: '工具'; }
         @media (min-width: 768px) {
-            body { padding: 20px 30px; }
-            .main-wrapper { display: flex; align-items: flex-start; gap: 30px; width: 96%; max-width: 1920px; margin: 0 auto; padding-bottom: 0; }
-            .layout-sidebar { width: 25vw; min-width: 320px; max-width: 450px; flex-shrink: 0; position: sticky; top: 20px; max-height: calc(100dvh - 40px); overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: env(safe-area-inset-bottom, 20px); display: flex; flex-direction: column; scrollbar-width: none; }
+            body { --page-pad: 16px; --sidebar-size: clamp(280px, 25vw, 450px); --toggle-gap: 10px; padding: var(--page-pad); }
+            .main-wrapper { display: block; width: 100%; max-width: none; margin: 0; padding-bottom: 0; }
+            .layout-sidebar { width: var(--sidebar-size); max-width: min(450px, 38vw); min-width: 0; position: fixed; left: var(--page-pad); top: var(--page-pad); bottom: var(--page-pad); max-height: none; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding-bottom: env(safe-area-inset-bottom, 20px); display: flex; flex-direction: column; scrollbar-width: none; opacity: 1; transform: translateX(0); z-index: 15; transition: width 0.45s ease, max-width 0.45s ease, opacity 0.3s ease, transform 0.45s ease; }
             .layout-sidebar::-webkit-scrollbar { display: none; }
-            .layout-content { flex: 1; min-width: 0; }
+            .layout-toggle { position: fixed; left: calc(var(--page-pad) + var(--sidebar-size) + var(--toggle-gap)); bottom: auto; top: calc(50dvh - 32px); width: 32px; height: 64px; margin: 0; border-radius: 999px; writing-mode: vertical-rl; gap: 4px; transform: none; transition: left 0.45s ease, transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease; }
+            .layout-toggle:hover { transform: scale(1.04); }
+            .layout-toggle:active { transform: scale(0.96); }
+            .layout-toggle-icon { writing-mode: horizontal-tb; }
+            .layout-toggle-icon::before { content: '←'; }
+            .layout-toggle-text::before { content: '收起'; }
+            .layout-content { width: auto; min-width: 0; margin-left: calc(var(--sidebar-size) + 32px + (var(--toggle-gap) * 2)); transition: margin-left 0.45s ease; }
+            .main-wrapper.tools-collapsed .layout-sidebar { width: 0; max-width: 0; max-height: none; opacity: 0; transform: translateX(-32px); }
+            .main-wrapper.tools-collapsed .layout-toggle { left: calc(var(--page-pad) + var(--toggle-gap)); }
+            .main-wrapper.tools-collapsed .layout-content { margin-left: calc(32px + (var(--toggle-gap) * 2)); }
+            .main-wrapper.tools-collapsed .layout-toggle-icon::before { content: '→'; }
+            .main-wrapper.tools-collapsed .layout-toggle-text::before { content: '工具'; }
+        }
+        @media (min-width: 768px) and (max-width: 980px) {
+            body { --page-pad: 10px; --sidebar-size: clamp(260px, 36vw, 340px); --toggle-gap: 6px; }
+            .layout-sidebar { max-width: 40vw; }
         }
         .wood-panel { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px var(--shadow); transition: all 0.3s ease; }
         
@@ -184,13 +237,14 @@
         .filter-dot.active { border-color: var(--text-main); transform: scale(1.1); }
         .filter-dot.active::after { content: '✓'; position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); color: #fff; text-shadow: 0 0 3px #000; font-weight: bold;}
 
-        .masonry-grid { column-count: 2; column-gap: 20px; transition: opacity 0.3s; }
-        @media (min-width: 900px) { .masonry-grid { column-count: 3; } }
-        @media (min-width: 1400px) { .masonry-grid { column-count: 4; } }
-        @media (min-width: 1800px) { .masonry-grid { column-count: 5; } }
-        .masonry-grid.view-list { column-count: 1 !important; display: flex; flex-direction: column; gap: 10px; }
+        .masonry-grid { --masonry-gap: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); align-items: stretch; gap: var(--masonry-gap); width: 100%; min-width: 0; transition: opacity 0.2s; }
+        .masonry-grid.view-list { display: flex; flex-direction: column; gap: 10px; height: auto !important; contain: none; }
+        @media (max-width: 700px) { .masonry-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 329px) { .masonry-grid { grid-template-columns: minmax(0, 1fr); } }
 
-        .polaroid-card { background: var(--bg-panel); border-radius: 8px; margin-bottom: 20px; break-inside: avoid; box-shadow: 0 4px 8px var(--shadow); overflow: hidden; transform: translateZ(0); border: 1px solid var(--border); transition: transform 0.2s; color: var(--text-main); position: relative;}
+        .polaroid-card { width: 100%; min-width: 0; background: var(--bg-panel); border-radius: 8px; margin: 0; box-shadow: 0 4px 8px var(--shadow); overflow: hidden; border: 1px solid var(--border); transition: transform 0.2s; color: var(--text-main); position: relative; }
+        .masonry-grid:not(.view-list) .polaroid-card { content-visibility: auto; contain-intrinsic-size: auto 360px; transition: box-shadow 0.2s, border-color 0.2s; }
+        .masonry-grid.view-list .polaroid-card { content-visibility: auto; contain-intrinsic-size: auto 90px; }
         .polaroid-card:hover { transform: translateY(-3px); box-shadow: 0 8px 16px var(--shadow); border-color: var(--accent); }
         .polaroid-card.is-selected { border: 2px solid var(--select-border); transform: scale(0.98); }
         .polaroid-card.is-selected .card-img-area::after { content: '✓'; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--select-overlay); display: flex; align-items: center; justify-content: center; font-size: 40px; color: var(--select-border); font-weight: bold; text-shadow: 0 2px 5px rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
@@ -200,21 +254,21 @@
         .no-img-label { font-size: 13px; color: var(--text-sub); letter-spacing: 1px;}
         .total-badge { position: absolute; top: 10px; left: 12px; z-index: 3; font-family: "Impact", sans-serif; font-size: 24px; font-weight: 900; color: var(--badge-text); background: var(--badge-bg); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); padding: 2px 8px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); pointer-events: none; letter-spacing: 1px; }
 
-        .masonry-grid.view-list .polaroid-card { display: flex; flex-direction: row; align-items: center; margin-bottom: 0; padding: 5px; height: 80px; }
+        .masonry-grid.view-list .polaroid-card { display: flex; flex-direction: row; align-items: center; margin-bottom: 0; padding: 5px; min-height: 80px; height: auto; grid-row-end: auto !important; }
         .masonry-grid.view-list .card-img-area { width: 70px; height: 70px; min-height: 70px; border-radius: 4px; margin-right: 10px; flex-shrink: 0; }
         .masonry-grid.view-list .card-img { height: 100%; width: 100%; object-fit: cover; }
-        .masonry-grid.view-list .card-info { padding: 0; flex: 1; display: flex; align-items: center; justify-content: space-between; }
-        .masonry-grid.view-list .card-header { margin-bottom: 0; flex-direction: column; justify-content: center; align-items: flex-start; }
-        .masonry-grid.view-list .card-title { font-size: 14px; margin-bottom: 2px; }
+        .masonry-grid.view-list .card-info { padding: 0; flex: 1; min-width: 0; display: flex; align-items: center; justify-content: space-between; }
+        .masonry-grid.view-list .card-header { min-width: 0; margin-bottom: 0; flex: 1 1 180px; flex-direction: column; justify-content: center; align-items: flex-start; }
+        .masonry-grid.view-list .card-title { width: 100%; max-width: 100%; font-size: 14px; margin-bottom: 2px; }
         .masonry-grid.view-list .card-meta { margin-bottom: 0; font-size: 12px; }
         .masonry-grid.view-list .stock-row { display: inline-flex; padding: 2px 5px; margin-top: 0; margin-left: 10px; }
         .masonry-grid.view-list .stock-label { display: none; }
-        .masonry-grid.view-list .btn-del, .masonry-grid.view-list .btn-edit, .masonry-grid.view-list .btn-copy { position: static; margin-left: 5px; width: 24px; height: 24px; font-size: 12px; background: var(--bg-panel); color: var(--text-sub); border: 1px solid var(--border); opacity: 1; }
+        .masonry-grid.view-list .btn-del, .masonry-grid.view-list .btn-edit, .masonry-grid.view-list .btn-copy, .masonry-grid.view-list .btn-track { position: static; margin-left: 5px; width: 24px; height: 24px; font-size: 12px; background: var(--bg-panel); color: var(--text-sub); border: 1px solid var(--border); opacity: 1; }
         .masonry-grid.view-list .total-badge { font-size: 14px; top: 2px; left: 2px; }
 
-        .card-info { padding: 15px; }
-        .card-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px; }
-        .card-title { font-weight: bold; font-size: 16px; line-height: 1.3; }
+        .card-info { min-width: 0; padding: 15px; }
+        .card-header { min-width: 0; display: flex; justify-content: space-between; align-items: start; gap: 6px; margin-bottom: 8px; }
+        .card-title { min-width: 0; max-width: 100%; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow-wrap: anywhere; word-break: break-word; text-overflow: ellipsis; font-weight: bold; font-size: 16px; line-height: 1.3; max-height: 3.9em; }
         .color-badge { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--border); flex-shrink: 0; margin-top: 3px; }
         .card-meta { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-sub); margin-bottom: 12px; }
         .price-tag { color: var(--accent); font-weight: bold; font-size: 15px; }
@@ -227,11 +281,55 @@
         .stock-ctrl { display: flex; align-items: center; gap: 5px; }
         .btn-mini { width: 32px; height: 32px; border-radius: 6px; background: var(--bg-panel); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; color: var(--text-main); user-select: none; font-weight: bold; box-shadow: 0 2px 0 rgba(0,0,0,0.1); }
         .btn-mini:active { transform: translateY(2px); box-shadow: none; }
+
+        /* 瀑布流紧凑模式：整体控件尺寸约缩小 20%，列表视图保持原尺寸。 */
+        .masonry-grid:not(.view-list) .card-img-area { min-height: 0; aspect-ratio: 4 / 3; }
+        .masonry-grid:not(.view-list) .card-img { width: 100%; height: 100%; object-fit: cover; }
+        .masonry-grid:not(.view-list) .card-info { padding: 12px; }
+        .masonry-grid:not(.view-list) .card-title { min-height: 3.9em; font-size: 13px; }
+        .masonry-grid:not(.view-list) .card-meta { font-size: 11px; margin-bottom: 9px; }
+        .masonry-grid:not(.view-list) .price-tag { font-size: 12px; }
+        .masonry-grid:not(.view-list) .color-badge { width: 13px; height: 13px; }
+        .masonry-grid:not(.view-list) .total-badge { top: 8px; left: 9px; font-size: 19px; padding: 2px 6px; }
+        .masonry-grid:not(.view-list) .stock-row { padding: 6px 8px; margin-top: 6px; }
+        .masonry-grid:not(.view-list) .stock-label { font-size: 10px; }
+        .masonry-grid:not(.view-list) .stock-ctrl { gap: 4px; }
+        .masonry-grid:not(.view-list) .btn-mini { width: 26px; height: 26px; font-size: 15px; }
+        .masonry-grid:not(.view-list) .big-num { min-width: 32px; font-size: 19px; }
+        .masonry-grid:not(.view-list) .btn-del,
+        .masonry-grid:not(.view-list) .btn-edit,
+        .masonry-grid:not(.view-list) .btn-copy,
+        .masonry-grid:not(.view-list) .btn-track { top: 6px; width: 24px; height: 24px; font-size: 13px; }
+        .masonry-grid:not(.view-list) .btn-copy { right: 6px; }
+        .masonry-grid:not(.view-list) .btn-del { right: 34px; }
+        .masonry-grid:not(.view-list) .btn-edit { right: 62px; }
+        .masonry-grid:not(.view-list) .btn-track { right: 90px; }
+        .masonry-grid:not(.view-list) .size-tags-container { height: 16px; flex-wrap: nowrap; gap: 3px; margin-top: 5px; overflow: hidden; }
+        .masonry-grid:not(.view-list) .size-tag { font-size: 8px; padding: 1px 5px; }
+
+        @media (max-width: 520px) {
+            .masonry-grid { --masonry-gap: 10px; }
+            .card-info { padding: 10px; }
+            .card-title { font-size: 14px; }
+            .stock-row { padding: 7px 6px; }
+            .stock-label { font-size: 11px; }
+            .stock-ctrl { gap: 3px; }
+            .btn-mini { width: 28px; height: 28px; font-size: 16px; }
+            .big-num { min-width: 28px; font-size: 20px; }
+            .masonry-grid.view-list .card-info { align-items: stretch; flex-wrap: wrap; gap: 4px; }
+            .masonry-grid.view-list .card-header { flex-basis: calc(100% - 8px); }
+            .masonry-grid.view-list .stock-row { margin-left: 4px; }
+        }
         
         .btn-del { position: absolute; top: 8px; right: 42px; width: 30px; height: 30px; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; cursor: pointer; z-index: 2; font-size: 18px; }
         .btn-copy { position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; cursor: pointer; z-index: 2; font-size: 16px; }
         .btn-edit { position: absolute; top: 8px; right: 76px; width: 30px; height: 30px; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; cursor: pointer; z-index: 2; font-size: 14px; }
-        .polaroid-card:hover .btn-del, .polaroid-card:hover .btn-edit, .polaroid-card:hover .btn-copy { opacity: 1; }
+        .btn-track { position: absolute; top: 8px; right: 110px; width: 30px; height: 30px; background: rgba(0,0,0,0.68); color: #ffd166; border-radius: 50%; border: 1px solid rgba(255,209,102,.55); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s, transform .2s; cursor: pointer; z-index: 2; font-size: 15px; }
+        .btn-track:hover { transform: scale(1.1); }
+        .polaroid-card:hover .btn-del, .polaroid-card:hover .btn-edit, .polaroid-card:hover .btn-copy, .polaroid-card:hover .btn-track { opacity: 1; }
+        @media (hover: none), (pointer: coarse) {
+            .polaroid-card .btn-del, .polaroid-card .btn-edit, .polaroid-card .btn-copy, .polaroid-card .btn-track { opacity: 1; }
+        }
 
         .batch-actions { display: flex; gap: 10px; margin-bottom: 15px; padding: 10px; background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; align-items: center; justify-content: space-between; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
@@ -244,6 +342,41 @@
         #modalImg { max-width: 100%; max-height: 70vh; border: 2px solid rgba(255,255,255,0.2); border-radius: 4px; box-shadow: 0 0 30px rgba(0,0,0,0.8); object-fit: contain;}
         #modalRemark { margin-top: 20px; color: #fff; font-size: 20px; font-weight: bold; text-align: center; max-width: 600px; line-height: 1.6; text-shadow: 0 2px 4px rgba(0,0,0,0.8); overflow-y: auto; max-height: 20vh;}
         .modal-close-tip { color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 20px; border: 1px solid rgba(255,255,255,0.3); padding: 5px 15px; border-radius: 20px; cursor: pointer;}
+	    body.detail-open { overflow-y: hidden; }
+	    #imgModal {
+	        display: flex;
+	        visibility: hidden;
+	        opacity: 0;
+	        pointer-events: none;
+	        background: rgba(0,0,0,0);
+	        backdrop-filter: blur(0);
+	        -webkit-backdrop-filter: blur(0);
+	        transition: opacity 0.28s ease, background-color 0.28s ease, backdrop-filter 0.28s ease, visibility 0s linear 0.32s;
+	    }
+	    #imgModal.is-open {
+	        visibility: visible;
+	        opacity: 1;
+	        pointer-events: auto;
+	        background: rgba(0,0,0,0.92);
+	        backdrop-filter: blur(7px);
+	        -webkit-backdrop-filter: blur(7px);
+	        transition-delay: 0s;
+	    }
+	    #imgModal #modalImg {
+	        opacity: 0;
+	        transform: translateY(24px) scale(0.86);
+	        filter: saturate(0.75) brightness(0.75);
+	        transition: opacity 0.3s ease, transform 0.42s cubic-bezier(0.2, 0.85, 0.25, 1.12), filter 0.38s ease;
+	    }
+	    #imgModal.is-open #modalImg { opacity: 1; transform: translateY(0) scale(1); filter: none; transition-delay: 0.035s; }
+	    #imgModal #modalRemark { opacity: 0; transform: translateY(14px); transition: opacity 0.24s ease, transform 0.3s ease; }
+	    #imgModal.is-open #modalRemark { opacity: 1; transform: translateY(0); transition-delay: 0.13s; }
+	    #imgModal .modal-close-tip { opacity: 0; transform: translateY(8px); transition: opacity 0.22s ease, transform 0.25s ease, background-color 0.2s ease; }
+	    #imgModal.is-open .modal-close-tip { opacity: 1; transform: translateY(0); transition-delay: 0.2s; }
+	    #imgModal .modal-close-tip:hover { background: rgba(255,255,255,0.1); }
+	    @media (prefers-reduced-motion: reduce) {
+	        #imgModal, #imgModal #modalImg, #imgModal #modalRemark, #imgModal .modal-close-tip { transition-duration: 0.01ms !important; transition-delay: 0s !important; }
+	    }
         .stock-modal-content { background: var(--bg-panel); width: 85%; max-width: 350px; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: var(--text-main); }
         .stock-summary { margin: 15px 0; padding: 10px; background: rgba(128,128,128,0.1); border-radius: 8px; font-size: 13px; }
         .stock-summary div { margin-bottom: 5px; display: flex; justify-content: space-between; }
@@ -252,7 +385,7 @@
         .edit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px;}
         .edit-title { font-size: 18px; font-weight: bold; color: var(--accent); }
         .btn-close-edit { background: none; border: none; font-size: 24px; color: var(--text-sub); cursor: pointer; }
-        #live2dcanvas { border: none !important; pointer-events: auto; cursor: grab; transition: none !important; }
+        #live2dcanvas { border: none !important; pointer-events: auto; touch-action: none; cursor: grab; transition: none !important; }
         #live2dcanvas:active { cursor: grabbing; }
         .waifu-tips { position: fixed; opacity: 0; transition: opacity 0.3s; background: rgba(255, 255, 255, 0.95); color: #333; border: 2px solid var(--accent); border-radius: 12px; padding: 12px 15px; font-size: 14px; line-height: 1.5; box-shadow: 0 5px 15px rgba(0,0,0,0.2); pointer-events: none; z-index: 9999; width: 200px; text-align: center; top: 0; left: 0; }
         .waifu-tips::after { content: ''; position: absolute; bottom: -8px; left: 20px; width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 8px solid var(--accent); }
@@ -401,9 +534,14 @@
                 <div class="theme-btn-group" id="themeGroup"></div>
                 <button class="btn-waifu-toggle" onclick="toggleWaifu()">👁️ 召唤/隐藏看板娘</button>
             </div>
-            <div style="height: 20px;"></div>
-        </div>
-        <div class="layout-content">
+	            <div style="height: 20px;"></div>
+	        </div>
+	        <button class="layout-toggle" id="layoutToggle" type="button" onclick="toggleToolsPanel()" aria-controls="sidebar" aria-expanded="true" title="收起操作栏">
+	            <span class="layout-toggle-icon" aria-hidden="true"></span>
+	            <span class="layout-toggle-text" aria-hidden="true"></span>
+	            <span class="sr-only" id="layoutToggleLabel">收起操作栏</span>
+	        </button>
+	        <div class="layout-content">
             <div class="filter-sticky">
                 <input type="text" class="search-input" id="searchBox" placeholder="🔍 搜索..." oninput="renderList()">
                 <div class="filter-controls">
@@ -568,8 +706,9 @@
         const COLOR_KEY = 'wardrobe_colors_history';
         const THEME_KEY = 'wardrobe_theme';
         const UPDATE_KEY = 'wardrobe_last_update'; 
-        const WAIFU_KEY = 'wardrobe_waifu_visible';
-        const QUOTES_KEY = 'wardrobe_custom_quotes';
+	        const WAIFU_KEY = 'wardrobe_waifu_visible';
+	        const QUOTES_KEY = 'wardrobe_custom_quotes';
+	        const TOOLS_PANEL_KEY = 'wardrobe_tools_collapsed';
         
         // 注意：localForage 使用 IndexedDB，无需计算容量限制，但为了代码健壮性保留变量
         const MAX_STORAGE_MB = 99999; 
@@ -582,8 +721,11 @@
         let isBatchMode = false;
         let selectedIds = new Set();
         let currentPersona = 'normal'; // 当前性格
-        let currentView = 'grid'; 
-        let waifuTimer = null;
+	        let currentView = 'grid';
+	        let waifuTimer = null;
+	        let thumbnailObserver = null;
+	        const thumbnailSources = new WeakMap();
+	        let detailCloseTimer = null;
 
         const themes = [
             { id: 'passion', icon: '🍷', name: '主站' },
@@ -1160,9 +1302,33 @@
       "节日好～要不要一起过最开心的这一天～"
     ]
   }
-        };
+	        };
 
-        window.onload = async function() {
+	        function applyToolsPanelState(collapsed, persist = true) {
+	            const wrapper = document.querySelector('.main-wrapper');
+	            const toggle = document.getElementById('layoutToggle');
+	            const label = document.getElementById('layoutToggleLabel');
+	            if (!wrapper || !toggle) return;
+
+	            wrapper.classList.toggle('tools-collapsed', collapsed);
+	            toggle.setAttribute('aria-expanded', String(!collapsed));
+	            toggle.title = collapsed ? '展开操作栏' : '收起操作栏';
+	            if (label) label.textContent = toggle.title;
+	            if (persist) localStorage.setItem(TOOLS_PANEL_KEY, String(collapsed));
+
+	        }
+
+	        function toggleToolsPanel() {
+	            const wrapper = document.querySelector('.main-wrapper');
+	            if (!wrapper) return;
+	            applyToolsPanelState(!wrapper.classList.contains('tools-collapsed'));
+	        }
+
+	        function initToolsPanel() {
+	            applyToolsPanelState(localStorage.getItem(TOOLS_PANEL_KEY) === 'true', false);
+	        }
+
+	        window.onload = async function() {
             // 1. 初始化 localForage
             localforage.config({ name: 'MyTreasureBox' });
 
@@ -1181,11 +1347,13 @@
             }
 
             // 3. 继续后续初始化
-            initTheme();          
-            renderRecentColors(); 
-            updateTimeDisplay();  
-            renderList();         
-            initPCScroll();       
+	            initTheme();
+	            initToolsPanel();
+            renderRecentColors();
+            updateTimeDisplay();
+            renderList();
+            if (typeof initStorageRoomMode === 'function') await initStorageRoomMode();
+            initPCScroll();
             initWaifu();          
             initWaifuInteractions();
 			initColorBarScroll();
@@ -1199,7 +1367,8 @@
         async function updateDB() { 
             try {
                 await localforage.setItem(STORAGE_KEY, inventory);
-                renderList(); 
+                renderList();
+                if (typeof onInventoryUpdatedForStorageRoom === 'function') onInventoryUpdatedForStorageRoom();
             } catch (err) {
                 alert("❌ 保存失败：" + err);
                 console.error(err);
@@ -1245,7 +1414,20 @@ function renderList() {
     const sortType = document.getElementById('sortSelect').value;
     
     listEl.className = `masonry-grid ${currentView === 'list' ? 'view-list' : ''}`;
+    listEl.style.height = '';
     listEl.innerHTML = '';
+	    if (thumbnailObserver) thumbnailObserver.disconnect();
+	    if ('IntersectionObserver' in window) {
+	        thumbnailObserver = new IntersectionObserver(entries => {
+	            entries.forEach(entry => {
+	                if (!entry.isIntersecting) return;
+	                const img = entry.target;
+	                const src = thumbnailSources.get(img);
+	                if (src && !img.hasAttribute('src')) img.src = src;
+	                thumbnailObserver.unobserve(img);
+	            });
+	        }, { rootMargin: '700px 0px', threshold: 0.01 });
+	    }
     
     let stats = { '总价值': 0 }; 
     let visibleColors = new Set();
@@ -1272,6 +1454,8 @@ function renderList() {
         return b.id - a.id;
     });
 
+    const fragment = document.createDocumentFragment();
+
     filteredItems.forEach(item => {
         const val = (item.newQty + item.usedQty) * item.price;
         stats['总价值'] += val;
@@ -1284,34 +1468,29 @@ function renderList() {
         const isSelected = selectedIds.has(item.id);
         card.className = `polaroid-card ${isSelected ? 'is-selected' : ''}`;
         
-        const imgHtml = item.img ? `<img src="${item.img}" class="card-img">` : `<div class="no-img-label">${item.cat}</div>`;
-        const safeRemark = item.remark ? encodeURIComponent(item.remark).replace(/'/g, "%27") : "";
-        
-        let clickAction = isBatchMode 
-            ? `onclick="toggleSelect(${item.id})"` 
-            : `onclick="showDetail('${item.img || ''}', '${safeRemark}')"`;
+	        const imgHtml = item.img ? `<img class="card-img" alt="" decoding="async">` : `<div class="no-img-label">${item.cat}</div>`;
         
 
-        let sizeTagsHtml = '';
+        let sizeTagsHtml = '<div class="size-tags-container">';
         if (item.sizeNew && Object.keys(item.sizeNew).length > 0) {
-            sizeTagsHtml = '<div class="size-tags-container">';
             for (let s in item.sizeNew) {
                 if(item.sizeNew[s] > 0) sizeTagsHtml += `<span class="size-tag">${s} <b>x${item.sizeNew[s]}</b></span>`;
             }
-            sizeTagsHtml += '</div>';
         }
+        sizeTagsHtml += '</div>';
 
         let actionBtns = isBatchMode ? "" : `
             <button class="btn-del" onclick="delItem(${item.id})" title="删除">🗑️</button>
             <button class="btn-edit" onclick="openEditModal(${item.id})" title="编辑">✏️</button>
             <button class="btn-copy" onclick="copyToInput(${item.id})" title="复制到录入">📋</button>
+            <button class="btn-track" onclick="locateItemInStorageRoom(${item.id})" title="追踪存放位置" aria-label="追踪存放位置">🧭</button>
             <div class="stock-row"><span class="stock-label">📦 全新</span><div class="stock-ctrl"><div class="btn-mini" onclick="mod(${item.id}, 'new', -1)">-</div><span class="big-num num-new">${item.newQty}</span><div class="btn-mini" onclick="mod(${item.id}, 'new', 1)">+</div></div></div>
             ${sizeTagsHtml}
             <div class="stock-row"><span class="stock-label">⚡ 在用</span><div class="stock-ctrl"><div class="btn-mini" onclick="mod(${item.id}, 'used', -1)">-</div><span class="big-num num-used">${item.usedQty}</span><div class="btn-mini" onclick="mod(${item.id}, 'used', 1)">+</div></div></div>
         `;
 
         card.innerHTML = `
-            <div class="card-img-area" ${clickAction}>
+            <div class="card-img-area">
                 ${imgHtml}
                 <span class="total-badge">${totalQty}</span>
             </div>
@@ -1320,14 +1499,34 @@ function renderList() {
                 <div class="card-meta"><span>${item.cat}</span><span class="price-tag">¥${item.price}</span></div>
                 ${actionBtns}
             </div>`;
-        listEl.appendChild(card);
+        const imageArea = card.querySelector('.card-img-area');
+	        const thumbnail = card.querySelector('.card-img');
+	        if (thumbnail) {
+	            if (thumbnailObserver) {
+	                thumbnailSources.set(thumbnail, item.img);
+	                thumbnailObserver.observe(thumbnail);
+	            } else {
+	                thumbnail.src = item.img;
+	            }
+	        }
+        imageArea.addEventListener('click', () => {
+            if (isBatchMode) toggleSelect(item.id);
+            else showDetail(item.img || '', item.remark ? encodeURIComponent(item.remark) : '');
+        });
+        fragment.appendChild(card);
     });
-    renderStats(stats); 
+    listEl.appendChild(fragment);
+    renderStats(stats);
     renderFilterBar(visibleColors);
 }
 
         // --- 辅助功能 ---
-        function toggleViewMode() { currentView = currentView === 'grid' ? 'list' : 'grid'; document.getElementById('viewIcon').innerText = currentView === 'grid' ? '🖼️' : '📝'; renderList(); say('click:toggleView'); }
+        function toggleViewMode() {
+            currentView = currentView === 'grid' ? 'list' : 'grid';
+            document.getElementById('viewIcon').innerText = currentView === 'grid' ? '🖼️' : '📝';
+            document.getElementById('itemList').classList.toggle('view-list', currentView === 'list');
+            say('click:toggleView');
+        }
         function openEditModal(id) { 
             const item=inventory.find(x=>x.id===id); if(!item)return; 
             document.getElementById('editId').value=item.id; 
@@ -1444,23 +1643,66 @@ function renderList() {
             r.readAsDataURL(f); 
         }
 
-        function showDetail(imgSrc, encodedRemark) { const modal = document.getElementById('imgModal'); const imgEl = document.getElementById('modalImg'); const remarkEl = document.getElementById('modalRemark'); if(imgSrc) { imgEl.src = imgSrc; imgEl.style.display = 'block'; } else { imgEl.style.display = 'none'; } const remark = decodeURIComponent(encodedRemark); if(remark) { remarkEl.innerText = remark; remarkEl.style.display = 'block'; } else { remarkEl.style.display = 'none'; } modal.style.display = 'flex'; }
-        function closeModal() { document.getElementById('imgModal').style.display = 'none'; }
+	        function showDetail(imgSrc, encodedRemark) {
+	            const modal = document.getElementById('imgModal');
+	            const imgEl = document.getElementById('modalImg');
+	            const remarkEl = document.getElementById('modalRemark');
+	            window.clearTimeout(detailCloseTimer);
+
+	            if(imgSrc) {
+	                imgEl.src = imgSrc;
+	                imgEl.style.display = 'block';
+	            } else {
+	                imgEl.removeAttribute('src');
+	                imgEl.style.display = 'none';
+	            }
+
+	            const remark = decodeURIComponent(encodedRemark);
+	            if(remark) {
+	                remarkEl.innerText = remark;
+	                remarkEl.style.display = 'block';
+	            } else {
+	                remarkEl.innerText = '';
+	                remarkEl.style.display = 'none';
+	            }
+
+	            modal.classList.remove('is-open');
+	            document.body.classList.add('detail-open');
+	            void modal.offsetWidth;
+	            requestAnimationFrame(() => modal.classList.add('is-open'));
+	        }
+
+	        function closeModal() {
+	            const modal = document.getElementById('imgModal');
+	            if (!modal.classList.contains('is-open')) return;
+	            modal.classList.remove('is-open');
+	            document.body.classList.remove('detail-open');
+	            window.clearTimeout(detailCloseTimer);
+	            detailCloseTimer = window.setTimeout(() => {
+	                if (!modal.classList.contains('is-open')) document.getElementById('modalImg').removeAttribute('src');
+	            }, 340);
+	        }
+
+	        document.addEventListener('keydown', event => {
+	            if (event.key === 'Escape') closeModal();
+	        });
         
         // --- 批量、计算、备份 (新逻辑: 兼容与时间记忆) ---
-        function exportDataFile() { 
-            if (inventory.length === 0) { alert("空空如也！"); return; } 
+        function exportDataFile() {
+            const storageBackup = typeof getStorageRoomBackup === 'function' ? getStorageRoomBackup() : [];
+            if (inventory.length === 0 && storageBackup.length === 0) { alert("空空如也！"); return; }
             
             const now = new Date();
             const timeStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
             
             const exportData = {
                 meta: {
-                    version: "9.16",
+                    version: "9.6.3",
                     saveTime: timeStr,
                     description: "我的藏宝箱备份数据"
                 },
-                data: inventory
+                data: inventory,
+                storageRooms: storageBackup
             };
             
             const jsonStr = JSON.stringify(exportData); 
@@ -1504,8 +1746,11 @@ function renderList() {
                         throw new Error("文件格式错误");
                     }
                     
-                    inventory = loadedData; 
+                    inventory = loadedData;
                     await updateDB(); // 等待写入
+                    if (Array.isArray(parsed.storageRooms) && typeof importStorageRoomBackup === 'function') {
+                        await importStorageRoomBackup(parsed.storageRooms);
+                    }
                     
                     lastUpdateTime = loadedTime;
                     localStorage.setItem(UPDATE_KEY, loadedTime);
@@ -1572,6 +1817,9 @@ function mergeDataFile() {
 
             // 执行写入并更新视图
             await updateDB();
+            if (Array.isArray(parsed.storageRooms) && typeof mergeStorageRoomBackup === 'function') {
+                await mergeStorageRoomBackup(parsed.storageRooms);
+            }
             recordUpdateTime();
             
             // 重置输入框
@@ -1787,11 +2035,16 @@ function mergeDataFile() {
             if(key === 'welcome'){ 
                 const c = getWelcomeContext(); 
                 l = p[c] || p['welcome']; 
-            } else { 
-                l = p[key]; 
-                if(!l && key.includes(':')) l = p[key.split(':').slice(0,2).join(':')]; 
-            } 
-            if(!l || l.length === 0) return; 
+            } else {
+                l = p[key];
+                if(!l && key.includes(':')) l = p[key.split(':').slice(0,2).join(':')];
+	            }
+	            // 某些主题台词包没有 drag/hover 等键时，回退到 normal，保证气泡功能不失效。
+	            if ((!l || l.length === 0) && waifuQuotes.normal) {
+	                l = waifuQuotes.normal[key];
+	                if(!l && key.includes(':')) l = waifuQuotes.normal[key.split(':').slice(0,2).join(':')];
+	            }
+            if(!l || l.length === 0) return;
             showWaifuText(l[Math.floor(Math.random()*l.length)]); 
         }
 
@@ -1809,8 +2062,8 @@ function mergeDataFile() {
                     "mobile": { "show": false }, 
                     "react": { "opacityDefault": 1 } 
                 }); 
-                setTimeout(initWaifuDrag,1000); 
-                setTimeout(()=>say('welcome'),2000); 
+	                setTimeout(() => initWaifuDrag(0), 250);
+                setTimeout(()=>say('welcome'),2000);
             } 
         }
         function toggleWaifu() { 
@@ -1819,7 +2072,10 @@ function mergeDataFile() {
                 const h=c.style.display==='none'; 
                 c.style.display=h?'block':'none'; 
                 localStorage.setItem(WAIFU_KEY,h); 
-                if(h) showWaifuText("我又出来啦！"); 
+	                if(h) {
+	                    initWaifuDrag(0);
+	                    showWaifuText("我又出来啦！");
+	                }
             } else if(typeof L2Dwidget!=='undefined'){ 
                 loadWaifu(); 
                 localStorage.setItem(WAIFU_KEY,'true'); 
@@ -1836,79 +2092,79 @@ function mergeDataFile() {
             clearTimeout(tipsTimer); 
             tipsTimer=setTimeout(()=>{tips.classList.remove('active')},6000); 
         }
-        function updateTipsPosition(c) { 
-            const tips=document.getElementById('waifuTips'); 
-            if(c&&tips){ 
-                tips.style.left=(c.offsetLeft+20)+'px'; 
-                tips.style.top=(c.offsetTop-60)+'px'; 
-                tips.style.bottom='auto'; 
-                tips.style.right='auto'; 
-            } 
+        function updateTipsPosition(c) {
+            const tips=document.getElementById('waifuTips');
+            if(c&&tips){
+	                const rect = c.getBoundingClientRect();
+	                const tipsWidth = tips.offsetWidth || 200;
+	                const tipsHeight = tips.offsetHeight || 70;
+	                const left = Math.min(window.innerWidth - tipsWidth - 10, Math.max(10, rect.left + 20));
+	                let top = rect.top - tipsHeight - 12;
+	                if (top < 10) top = Math.min(window.innerHeight - tipsHeight - 10, rect.top + 20);
+	                tips.style.left=left+'px';
+	                tips.style.top=top+'px';
+                tips.style.bottom='auto';
+                tips.style.right='auto';
+            }
         }
-function initWaifuDrag() { 
-    const c = document.getElementById('live2dcanvas'); 
-    if(!c) return; 
-    
-    let isD = false, sX, sY, iL, iT; 
-    const r = c.getBoundingClientRect(); 
-    
-    // 初始化位置固定
-    c.style.bottom = 'auto'; c.style.right = 'auto'; 
-    c.style.left = r.left + 'px'; c.style.top = r.top + 'px'; 
-    c.style.position = 'fixed'; 
-    updateTipsPosition(c); 
+function initWaifuDrag(attempt = 0) {
+	    const c = document.getElementById('live2dcanvas');
+	    if (!c) {
+	        if (attempt < 40) window.setTimeout(() => initWaifuDrag(attempt + 1), 250);
+	        return;
+	    }
 
-    // --- 核心工具：兼容鼠标和手指坐标 ---
-    function getClientPos(e) {
-        // 如果是触摸事件(e.touches存在)，就取第一个手指的位置；否则取鼠标位置
-        return e.touches ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : { x: e.clientX, y: e.clientY };
-    }
+	    const initialRect = c.getBoundingClientRect();
+	    c.style.bottom = 'auto';
+	    c.style.right = 'auto';
+	    c.style.left = `${initialRect.left}px`;
+	    c.style.top = `${initialRect.top}px`;
+	    c.style.position = 'fixed';
+	    updateTipsPosition(c);
 
-    // 按下/触摸开始
-    const start = (e) => { 
-        isD = true; 
-        const pos = getClientPos(e);
-        sX = pos.x; 
-        sY = pos.y; 
-        const cr = c.getBoundingClientRect(); 
-        iL = cr.left; 
-        iT = cr.top; 
-        c.style.cursor = 'grabbing'; 
-        say('drag'); 
-        // 关键：阻止手机端默认的滚动屏幕行为
-        if(e.touches) e.preventDefault(); 
-    }; 
+	    if (c.dataset.wardrobeDragReady === 'true') return;
+	    c.dataset.wardrobeDragReady = 'true';
 
-    // 移动/拖动
-    const move = (e) => { 
-        if(isD) { 
-            const pos = getClientPos(e);
-            const dx = pos.x - sX; 
-            const dy = pos.y - sY; 
-            c.style.left = (iL + dx) + 'px'; 
-            c.style.top = (iT + dy) + 'px'; 
-            updateTipsPosition(c); 
-            // 移动时也要阻止屏幕滚动
-            if(e.touches) e.preventDefault(); 
-        } 
-    }; 
+	    let pointerId = null;
+	    let startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
 
-    // 松开/触摸结束
-    const end = () => { 
-        isD = false; 
-        c.style.cursor = 'grab'; 
-    }; 
+	    const start = (event) => {
+	        if (event.button !== undefined && event.button !== 0) return;
+	        const rect = c.getBoundingClientRect();
+	        pointerId = event.pointerId;
+	        startX = event.clientX;
+	        startY = event.clientY;
+	        initialLeft = rect.left;
+	        initialTop = rect.top;
+	        c.setPointerCapture?.(event.pointerId);
+	        c.style.cursor = 'grabbing';
+	        say('drag');
+	        event.preventDefault();
+	    };
 
-    // 1. 绑定 PC 鼠标事件
-    c.addEventListener('mousedown', start); 
-    document.addEventListener('mousemove', move); 
-    document.addEventListener('mouseup', end); 
+	    const move = (event) => {
+	        if (pointerId === null || event.pointerId !== pointerId) return;
+	        const maxLeft = Math.max(0, window.innerWidth - c.getBoundingClientRect().width);
+	        const maxTop = Math.max(0, window.innerHeight - c.getBoundingClientRect().height);
+	        c.style.left = `${Math.min(maxLeft, Math.max(0, initialLeft + event.clientX - startX))}px`;
+	        c.style.top = `${Math.min(maxTop, Math.max(0, initialTop + event.clientY - startY))}px`;
+	        updateTipsPosition(c);
+	        event.preventDefault();
+	    };
 
-    // 2. 绑定 手机 触摸事件 (新增)
-    // passive: false 是为了能使用 preventDefault() 阻止屏幕滚动
-    c.addEventListener('touchstart', start, { passive: false }); 
-    document.addEventListener('touchmove', move, { passive: false }); 
-    document.addEventListener('touchend', end); 
+	    const end = (event) => {
+	        if (pointerId === null || event.pointerId !== pointerId) return;
+	        c.releasePointerCapture?.(pointerId);
+	        pointerId = null;
+	        c.style.cursor = 'grab';
+	        updateTipsPosition(c);
+	    };
+
+	    c.addEventListener('pointerdown', start);
+	    c.addEventListener('pointermove', move);
+	    c.addEventListener('pointerup', end);
+	    c.addEventListener('pointercancel', end);
+	    window.addEventListener('resize', () => updateTipsPosition(c), { passive: true });
 }
         function initTheme() { const t=localStorage.getItem(THEME_KEY)||'passion'; setTheme(t); }
         function setTheme(id) { 
@@ -2001,6 +2257,7 @@ function initColorBarScroll() {
 }
 
 	</script>
+	<script src="./storage-room.js?v=9.6.3"></script>
 	<script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
