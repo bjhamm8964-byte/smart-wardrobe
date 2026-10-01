@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>我的藏宝箱 V9.6.3</title>
+    <title>我的藏宝箱 V9.7.0</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="./storage-room.css?v=9.6.3">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -380,6 +380,15 @@
         .stock-modal-content { background: var(--bg-panel); width: 85%; max-width: 350px; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: var(--text-main); }
         .stock-summary { margin: 15px 0; padding: 10px; background: rgba(128,128,128,0.1); border-radius: 8px; font-size: 13px; }
         .stock-summary div { margin-bottom: 5px; display: flex; justify-content: space-between; }
+        .size-quick-list { display: grid; gap: 9px; margin: 12px 0 16px; max-height: min(52vh, 430px); overflow-y: auto; }
+        .size-quick-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 58px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-body); }
+        .size-quick-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 800; }
+        .size-quick-ctrl { display: grid; grid-template-columns: 38px minmax(36px, auto) 38px; align-items: center; gap: 7px; }
+        .size-quick-ctrl .btn-mini { width: 38px; height: 38px; }
+        .size-quick-count { min-width: 36px; text-align: center; color: var(--accent); font-size: 20px; font-weight: 900; font-variant-numeric: tabular-nums; }
+        .size-quick-count.bump { animation: sizeCountBump .2s ease; }
+        .size-quick-empty { padding: 24px 12px; color: var(--text-sub); text-align: center; }
+        @keyframes sizeCountBump { 50% { transform: scale(1.22); } }
         .highlight-val { color: var(--accent); font-weight: bold; }
         .edit-modal-content { background: var(--bg-panel); width: 90%; max-width: 400px; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto; color: var(--text-main); }
         .edit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px;}
@@ -576,7 +585,7 @@
             </div>
             <div class="help-content">
                 <h4>1. 尺码矩阵 (新!)</h4>
-                <p>录入时填写尺码（如 L, 42码），系统会自动归类。点击卡片上的 <b>+</b> 号补货时，也可以指定尺码，库存会自动合并。</p>
+                <p>录入时填写尺码（如 L、42码），系统会自动归类。物品已有命名尺码时，点击库存 <b>+</b> 或 <b>-</b> 会打开尺码面板，可直接调整对应尺码数量。</p>
                 <h4>2. 编辑尺码 (最新!)</h4>
                 <p>点击 <b>✏️ 编辑</b> 按钮，现在可以管理已有的尺码库存了！支持修改数量、删除旧尺码、添加漏记的新尺码。</p>
                 <h4>3. 存档记忆 (增强!)</h4>
@@ -690,6 +699,19 @@
                 <div><span>补货后新均价:</span> <span id="newAvgPrice" class="highlight-val">--</span></div>
             </div>
             <button class="btn-main" onclick="confirmStockAdd()">✅ 确认补货</button>
+        </div>
+    </div>
+
+    <div id="sizeQuickModal" class="modal-overlay" style="z-index: 103;" onclick="closeSizeQuickModal()">
+        <div class="stock-modal-content" onclick="event.stopPropagation()">
+            <div class="edit-header">
+                <div class="edit-title">📏 按尺码调整数量</div>
+                <button class="btn-close-edit" onclick="closeSizeQuickModal()">×</button>
+            </div>
+            <input type="hidden" id="sizeQuickItemId">
+            <div id="sizeQuickItemName" style="font-weight:bold; color:var(--accent);"></div>
+            <div class="size-quick-list" id="sizeQuickList"></div>
+            <button class="btn-sub" style="width:100%;" onclick="openBatchStockFromSizeQuick()">📦 批量补货 / 添加新尺码</button>
         </div>
     </div>
 
@@ -1697,7 +1719,7 @@ function renderList() {
             
             const exportData = {
                 meta: {
-                    version: "9.6.3",
+                    version: "9.7.0",
                     saveTime: timeStr,
                     description: "我的藏宝箱备份数据"
                 },
@@ -1970,23 +1992,87 @@ function mergeDataFile() {
             item.price=(nVal/nQty).toFixed(2); item.newQty+=addQty; 
             await updateDB(); recordUpdateTime(); closeStockModal(); 
         }
-        async function mod(id, type, d) { 
+        function openSizeQuickModal(id) {
+            const item = inventory.find(x => x.id === id);
+            if (!item || !item.sizeNew || Object.keys(item.sizeNew).length === 0) return false;
+            document.getElementById('sizeQuickItemId').value = id;
+            document.getElementById('sizeQuickItemName').innerText = item.name;
+            renderSizeQuickRows(item);
+            document.getElementById('sizeQuickModal').style.display = 'flex';
+            return true;
+        }
+
+        function closeSizeQuickModal() {
+            document.getElementById('sizeQuickModal').style.display = 'none';
+        }
+
+        function renderSizeQuickRows(item) {
+            const list = document.getElementById('sizeQuickList');
+            list.innerHTML = '';
+            const sizes = Object.keys(item.sizeNew || {});
+            if (!sizes.length) {
+                list.innerHTML = '<div class="size-quick-empty">暂无已命名尺码</div>';
+                return;
+            }
+            sizes.forEach(size => {
+                const row = document.createElement('div');
+                row.className = 'size-quick-row';
+                const name = document.createElement('div');
+                name.className = 'size-quick-name';
+                name.textContent = size;
+                name.title = size;
+                const controls = document.createElement('div');
+                controls.className = 'size-quick-ctrl';
+                const minus = document.createElement('button');
+                minus.type = 'button';
+                minus.className = 'btn-mini';
+                minus.textContent = '−';
+                minus.setAttribute('aria-label', `${size} 减少一个`);
+                minus.disabled = Number(item.sizeNew[size]) <= 0;
+                const count = document.createElement('span');
+                count.className = 'size-quick-count';
+                count.textContent = Math.max(0, Number(item.sizeNew[size]) || 0);
+                const plus = document.createElement('button');
+                plus.type = 'button';
+                plus.className = 'btn-mini';
+                plus.textContent = '+';
+                plus.setAttribute('aria-label', `${size} 增加一个`);
+                minus.addEventListener('click', () => adjustNamedSize(item.id, size, -1, count, minus));
+                plus.addEventListener('click', () => adjustNamedSize(item.id, size, 1, count, minus));
+                controls.append(minus, count, plus);
+                row.append(name, controls);
+                list.append(row);
+            });
+        }
+
+        async function adjustNamedSize(id, size, delta, countEl, minusButton) {
+            const item = inventory.find(x => x.id === id);
+            if (!item || !item.sizeNew || !(size in item.sizeNew)) return;
+            const current = Math.max(0, Number(item.sizeNew[size]) || 0);
+            const next = Math.max(0, current + delta);
+            if (next === current) return;
+            item.sizeNew[size] = next;
+            item.newQty = Math.max(0, (Number(item.newQty) || 0) + (next - current));
+            countEl.textContent = next;
+            minusButton.disabled = next <= 0;
+            countEl.classList.remove('bump');
+            void countEl.offsetWidth;
+            countEl.classList.add('bump');
+            await updateDB();
+            recordUpdateTime();
+        }
+
+        function openBatchStockFromSizeQuick() {
+            const id = parseInt(document.getElementById('sizeQuickItemId').value);
+            closeSizeQuickModal();
+            openStockModal(id, 'new');
+        }
+
+        async function mod(id, type, d) {
+            if (type === 'new' && openSizeQuickModal(id)) return;
             if (d > 0 && type === 'new') { openStockModal(id, 'new'); return; }
             const item = inventory.find(x => x.id === id);
             if (item) {
-                if (d < 0 && type === 'new' && item.sizeNew && Object.keys(item.sizeNew).length > 0) {
-                    const availableSizes = Object.keys(item.sizeNew).filter(k => item.sizeNew[k] > 0);
-                    if (availableSizes.length > 0) {
-                        let targetSize = availableSizes[0];
-                        if (availableSizes.length > 1) {
-                            const pMsg = `该物品有多个尺码：${availableSizes.join(', ')}\n请输入要减掉的尺码：`;
-                            targetSize = prompt(pMsg);
-                            if (!targetSize || !item.sizeNew[targetSize]) { alert("取消操作"); return; }
-                        }
-                        item.sizeNew[targetSize]--;
-                        if(item.sizeNew[targetSize] <= 0) delete item.sizeNew[targetSize];
-                    }
-                }
                 item[type==='new'?'newQty':'usedQty'] = Math.max(0, item[type==='new'?'newQty':'usedQty'] + d);
                 await updateDB(); recordUpdateTime();
             }

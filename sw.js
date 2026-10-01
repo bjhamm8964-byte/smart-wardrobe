@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wardrobe-cache-v20';  // 储物间折叠动画
+const CACHE_NAME = 'wardrobe-cache-v21';  // 尺码快捷库存面板
 
 const ASSETS_TO_CACHE = [
   './',
